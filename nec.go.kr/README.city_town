@@ -1,0 +1,301 @@
+[cityCode]
+<select id='cityCode' name='cityCode' >
+<option class="o_01" value="-1" selected="selected">▽ 선 택</option>
+  <option value='1100' >서울특별시</option>
+  <option value='2600' >부산광역시</option>
+  <option value='2700' >대구광역시</option>
+  <option value='2800' >인천광역시</option>
+  <option value='2900' >광주광역시</option>
+  <option value='3000' >대전광역시</option>
+  <option value='3100' >울산광역시</option>
+  <option value='4100' >경기도</option>
+  <option value='4200' >강원도</option>
+  <option value='4300' >충청북도</option>
+  <option value='4400' >충청남도</option>
+  <option value='4500' >전라북도</option>
+  <option value='4600' >전라남도</option>
+  <option value='4700' >경상북도</option>
+  <option value='4800' >경상남도</option>
+  <option value='4900' >제주특별자치도</option>
+</select>
+
+[townCode]
+서울특별시
+  <option value="1101" >종로구</option>
+  <option value="1102" >중구</option>
+  <option value="1103" >용산구</option>
+  <option value="1104" >성동구</option>
+  <option value="1105" >광진구</option>
+  <option value="1106" >동대문구</option>
+  <option value="1107" >중랑구</option>
+  <option value="1108" >성북구</option>
+  <option value="1109" >강북구</option>
+  <option value="1110" >도봉구</option>
+  <option value="1111" >노원구</option>
+  <option value="1112" >은평구</option>
+  <option value="1113" >서대문구</option>
+  <option value="1114" >마포구</option>
+  <option value="1115" >양천구</option>
+  <option value="1116" >강서구</option>
+  <option value="1117" >구로구</option>
+  <option value="1118" >금천구</option>
+  <option value="1119" >영등포구</option>
+  <option value="1120" >동작구</option>
+  <option value="1121" >관악구</option>
+  <option value="1122" >서초구</option>
+  <option value="1123" >강남구</option>
+  <option value="1124" >송파구</option>
+  <option value="1125" >강동구</option>
+          
+부산광역시
+  <option value="2601" >중구</option>
+  <option value="2602" >서구</option>
+  <option value="2603" >동구</option>
+  <option value="2604" >영도구</option>
+  <option value="2605" >부산진구</option>
+  <option value="2606" >동래구</option>
+  <option value="2607" >남구</option>
+  <option value="2608" >북구</option>
+  <option value="2609" >해운대구</option>
+  <option value="2610" >기장군</option>
+  <option value="2611" >사하구</option>
+  <option value="2612" >금정구</option>
+  <option value="2613" >강서구</option>
+  <option value="2614" >연제구</option>
+  <option value="2615" >수영구</option>
+  <option value="2616" >사상구</option>
+
+대구광역시
+  <option value="2701" selected="selected">중구</option>
+  <option value="2702" >동구</option>
+  <option value="2703" >서구</option>
+  <option value="2704" >남구</option>
+  <option value="2705" >북구</option>
+  <option value="2706" >수성구</option>
+  <option value="2707" >달서구</option>
+  <option value="2708" >달성군</option>
+
+인천광역시
+  <option value="2801" selected="selected">중구</option>
+  <option value="2802" >동구</option>
+  <option value="2803" >남구</option>
+  <option value="2804" >연수구</option>
+  <option value="2805" >남동구</option>
+  <option value="2806" >부평구</option>
+  <option value="2807" >계양구</option>
+  <option value="2808" >서구</option>
+  <option value="2809" >강화군</option>
+  <option value="2810" >옹진군</option>
+
+광주광역시
+  <option value="2901" selected="selected">동구</option>
+  <option value="2902" >서구</option>
+  <option value="2903" >남구</option>
+  <option value="2904" >북구</option>
+  <option value="2905" >광산구</option>
+
+대전광역시
+  <option value="3001" selected="selected">동구</option>
+  <option value="3002" >중구</option>
+  <option value="3003" >서구</option>
+  <option value="3004" >유성구</option>
+  <option value="3005" >대덕구</option>
+
+울산광역시
+  <option value="3101" selected="selected">중구</option>
+  <option value="3102" >남구</option>
+  <option value="3103" >동구</option>
+  <option value="3104" >북구</option>
+  <option value="3105" >울주군</option>
+
+경기도
+  <option value="4101" selected="selected">수원시장안구</option>
+  <option value="4102" >수원시권선구</option>
+  <option value="4103" >수원시팔달구</option>
+  <option value="4104" >수원시영통구</option>
+  <option value="4105" >성남시수정구</option>
+  <option value="4106" >성남시중원구</option>
+  <option value="4107" >성남시분당구</option>
+  <option value="4108" >의정부시</option>
+  <option value="4109" >안양시만안구</option>
+  <option value="4110" >안양시동안구</option>
+  <option value="4111" >부천시원미구</option>
+  <option value="4112" >부천시소사구</option>
+  <option value="4113" >부천시오정구</option>
+  <option value="4114" >광명시</option>
+  <option value="4115" >평택시</option>
+  <option value="4116" >양주시</option>
+  <option value="4117" >동두천시</option>
+  <option value="4118" >안산시상록구</option>
+  <option value="4119" >안산시단원구</option>
+  <option value="4120" >고양시덕양구</option>
+  <option value="4121" >고양시일산동구</option>
+  <option value="4122" >고양시일산서구</option>
+  <option value="4123" >과천시</option>
+  <option value="4124" >의왕시</option>
+  <option value="4125" >구리시</option>
+  <option value="4126" >남양주시</option>
+  <option value="4127" >오산시</option>
+  <option value="4128" >화성시</option>
+  <option value="4129" >시흥시</option>
+  <option value="4130" >군포시</option>
+  <option value="4131" >하남시</option>
+  <option value="4132" >파주시</option>
+  <option value="4133" >여주군</option>
+  <option value="4134" >이천시</option>
+  <option value="4135" >용인시처인구</option>
+  <option value="4136" >용인시수지구</option>
+  <option value="4137" >용인시기흥구</option>
+  <option value="4138" >안성시</option>
+  <option value="4139" >김포시</option>
+  <option value="4140" >광주시</option>
+  <option value="4141" >포천시</option>
+  <option value="4142" >연천군</option>
+  <option value="4143" >양평군</option>
+  <option value="4144" >가평군</option>
+
+강원도
+  <option value="4201" selected="selected">춘천시</option>
+  <option value="4202" >원주시</option>
+  <option value="4203" >강릉시</option>
+  <option value="4204" >동해시</option>
+  <option value="4205" >삼척시</option>
+  <option value="4206" >태백시</option>
+  <option value="4207" >정선군</option>
+  <option value="4208" >속초시</option>
+  <option value="4209" >고성군</option>
+  <option value="4210" >양양군</option>
+  <option value="4211" >인제군</option>
+  <option value="4212" >홍천군</option>
+  <option value="4213" >횡성군</option>
+  <option value="4214" >영월군</option>
+  <option value="4215" >평창군</option>
+  <option value="4216" >화천군</option>
+  <option value="4217" >양구군</option>
+  <option value="4218" >철원군</option>
+
+충청북도
+  <option value="4301" selected="selected">청주시상당구</option>
+  <option value="4302" >청주시흥덕구</option>
+  <option value="4303" >충주시</option>
+  <option value="4304" >제천시</option>
+  <option value="4305" >단양군</option>
+  <option value="4306" >청원군</option>
+  <option value="4307" >영동군</option>
+  <option value="4308" >보은군</option>
+  <option value="4309" >옥천군</option>
+  <option value="4310" >음성군</option>
+  <option value="4311" >진천군</option>
+  <option value="4312" >괴산군</option>
+  <option value="4313" >증평군</option>
+
+충청남도
+  <option value="4401" selected="selected">천안시</option>
+  <option value="4402" >공주시</option>
+  <option value="4403" >보령시</option>
+  <option value="4404" >아산시</option>
+  <option value="4405" >서산시</option>
+  <option value="4406" >태안군</option>
+  <option value="4407" >금산군</option>
+  <option value="4408" >연기군</option>
+  <option value="4409" >논산시</option>
+  <option value="4410" >계룡시</option>
+  <option value="4411" >부여군</option>
+  <option value="4412" >서천군</option>
+  <option value="4413" >홍성군</option>
+  <option value="4414" >청양군</option>
+  <option value="4415" >예산군</option>
+  <option value="4416" >당진군</option>
+
+전라북도
+  <option value="4501" selected="selected">전주시완산구</option>
+  <option value="4502" >전주시덕진구</option>
+  <option value="4503" >군산시</option>
+  <option value="4505" >익산시</option>
+  <option value="4507" >정읍시</option>
+  <option value="4508" >남원시</option>
+  <option value="4509" >김제시</option>
+  <option value="4510" >완주군</option>
+  <option value="4511" >진안군</option>
+  <option value="4512" >무주군</option>
+  <option value="4513" >장수군</option>
+  <option value="4514" >임실군</option>
+  <option value="4515" >순창군</option>
+  <option value="4516" >고창군</option>
+  <option value="4517" >부안군</option>
+
+전라남도
+  <option value="4601" selected="selected">목포시</option>
+  <option value="4602" >여수시</option>
+  <option value="4604" >순천시</option>
+  <option value="4606" >나주시</option>
+  <option value="4607" >광양시</option>
+  <option value="4608" >담양군</option>
+  <option value="4609" >장성군</option>
+  <option value="4610" >곡성군</option>
+  <option value="4611" >구례군</option>
+  <option value="4612" >고흥군</option>
+  <option value="4613" >보성군</option>
+  <option value="4614" >화순군</option>
+  <option value="4615" >장흥군</option>
+  <option value="4616" >강진군</option>
+  <option value="4617" >완도군</option>
+  <option value="4618" >해남군</option>
+  <option value="4619" >진도군</option>
+  <option value="4620" >영암군</option>
+  <option value="4621" >무안군</option>
+  <option value="4622" >영광군</option>
+  <option value="4623" >함평군</option>
+  <option value="4624" >신안군</option>
+
+경상북도
+  <option value="4701" selected="selected">포항시북구</option>
+  <option value="4702" >포항시남구</option>
+  <option value="4703" >울릉군</option>
+  <option value="4704" >경주시</option>
+  <option value="4705" >김천시</option>
+  <option value="4706" >안동시</option>
+  <option value="4707" >구미시</option>
+  <option value="4708" >영주시</option>
+  <option value="4709" >영천시</option>
+  <option value="4710" >상주시</option>
+  <option value="4711" >문경시</option>
+  <option value="4712" >예천군</option>
+  <option value="4713" >경산시</option>
+  <option value="4714" >청도군</option>
+  <option value="4715" >고령군</option>
+  <option value="4716" >성주군</option>
+  <option value="4717" >칠곡군</option>
+  <option value="4718" >군위군</option>
+  <option value="4719" >의성군</option>
+  <option value="4720" >청송군</option>
+  <option value="4721" >영양군</option>
+  <option value="4722" >영덕군</option>
+  <option value="4723" >봉화군</option>
+  <option value="4724" >울진군</option>
+
+경상남도
+  <option value="4801" selected="selected">창원시</option>
+  <option value="4802" >마산시</option>
+  <option value="4803" >진주시</option>
+  <option value="4804" >진해시</option>
+  <option value="4805" >통영시</option>
+  <option value="4806" >고성군</option>
+  <option value="4807" >사천시</option>
+  <option value="4808" >김해시</option>
+  <option value="4809" >밀양시</option>
+  <option value="4810" >거제시</option>
+  <option value="4811" >의령군</option>
+  <option value="4812" >함안군</option>
+  <option value="4813" >창녕군</option>
+  <option value="4814" >양산시</option>
+  <option value="4815" >하동군</option>
+  <option value="4816" >남해군</option>
+  <option value="4817" >함양군</option>
+  <option value="4818" >산청군</option>
+  <option value="4819" >거창군</option>
+  <option value="4820" >합천군</option>
+
+제주특별자치도
+  <option value="4901" selected="selected">제주시</option>
+  <option value="4902" >서귀포시</option>

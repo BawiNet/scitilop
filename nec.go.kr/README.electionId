@@ -89,4 +89,16 @@ if(electionType == '11'){
   removeOption("electionName",19800827);
   removeOption("electionName",19810225);
 
- 
+switch (electionCode) {
+  case "0": statementId = "VCCP02_#1"; break;
+  case "1": statementId = "VCCP02_#1"; break;
+  case "2": statementId = "VCCP02_#1"; break;
+  case "3": statementId = "VCCP02_#1"; break;
+  case "4": statementId = "VCCP02_#2"; break;
+  case "5": statementId = "VCCP02_#3"; break;
+  case "6": statementId = "VCCP02_#4"; break;
+  case "7": statementId = "VCCP02_#1"; break;
+  case "8": statementId = "VCCP02_#5"; break;
+  case "9": statementId = "VCCP02_#6"; break;
+  case "10": statementId = "VCCP02_#7"; break;
+  case "11": statementId = "VCCP02_#8"; break; 

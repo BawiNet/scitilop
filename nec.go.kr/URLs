@@ -1,0 +1,13 @@
+Examples
+
+http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?requestURI=%2Felectioninfo%2F0000000000%2Fvc%2Fvccp09.jsp&statementId=VCCP02_%231&electionName=20071219&electionCode=1&cityCode=0
+
+http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?requestURI=%2Felectioninfo%2F0000000000%2Fvc%2Fvccp09.jsp&statementId=VCCP02_%2391&electionName=20021219&electionCode=1&cityCode=0
+
+http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?requestURI=%2Felectioninfo%2F0000000000%2Fvc%2Fvccp09.jsp&statementId=VCCP02_%231&electionName=20071219&electionCode=1&cityCode=2600
+
+Arguments
+
+* electionName
+* electionCode
+* citoCode

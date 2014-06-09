@@ -1,0 +1,92 @@
+http://info.nec.go.kr
+
+electionType
+  1 - 대통령선거
+  2 - 국회의원선거
+  4 - 지방선거
+  0 - 재·보궐선거
+  11 - 교육감선거
+
+if(electionType == '1'){
+  temp.append('<option value="20071219">제17대</option>');
+  temp.append('<option value="20021219">제16대</option>');
+  temp.append('<option value="19971218">제15대</option>');
+  temp.append('<option value="19921218">제14대</option>');
+  temp.append('<option value="19871216">제13대</option>');
+  temp.append('<option value="19810225">제12대</option>');
+  temp.append('<option value="19800827">제11대</option>');
+  temp.append('<option value="19791206">제10대</option>');
+  temp.append('<option value="19780706">제9대</option>');
+  temp.append('<option value="19721223">제8대</option>');
+  temp.append('<option value="19710427">제7대</option>');
+  temp.append('<option value="19670503">제6대</option>');
+  temp.append('<option value="19631015">제5대</option>');
+  temp.append('<option value="19600315">제4대</option>');
+  temp.append('<option value="19560515">제3대</option>');
+  temp.append('<option value="19520805">제2대</option>');
+  temp.append('<option value="19480720">제1대</option>');
+
+if(electionType == '2'){
+  temp.append('<option value="20080409">제18대</option>');
+  temp.append('<option value="20040415">제17대</option>');
+  temp.append('<option value="20000413">제16대</option>');
+  temp.append('<option value="19960411">제15대</option>');
+  temp.append('<option value="19920324">제14대</option>');
+  temp.append('<option value="19880426">제13대</option>');
+  temp.append('<option value="19850212">제12대</option>');
+  temp.append('<option value="19810325">제11대</option>');
+  temp.append('<option value="19781212">제10대</option>');
+  temp.append('<option value="19730227">제9대</option>');
+  temp.append('<option value="19710525">제8대</option>');
+  temp.append('<option value="19670608">제7대</option>');
+  temp.append('<option value="19631126">제6대</option>');
+  temp.append('<option value="19600729">제5대</option>');
+  temp.append('<option value="19580502">제4대</option>');
+  temp.append('<option value="19540520">제3대</option>');
+  temp.append('<option value="19500530">제2대</option>');
+  temp.append('<option value="19480510">제1대</option>');
+
+if(electionType == '4'){
+  temp.append('<option value="20100602">제5회</option>');
+  temp.append('<option value="20060531">제4회</option>');
+  temp.append('<option value="20020613">제3회</option>');
+  temp.append('<option value="19980604">제2회</option>');
+  temp.append('<option value="19950627">제1회</option>');
+      
+if(electionType == '0'){
+  temp.append('<option value="20110427">2011년 상반기</option>');
+  temp.append('<option value="20101027">2010년 하반기</option>');
+  temp.append('<option value="20100728">2010년 상반기</option>');
+  temp.append('<option value="20091028">2009년 하반기</option>');
+  temp.append('<option value="20090429">2009년 상반기</option>');
+  temp.append('<option value="20081029">2008년 하반기</option>');
+  temp.append('<option value="20080604">2008년 상반기</option>');
+  temp.append('<option value="20070425">2007년 상반기</option>');
+  temp.append('<option value="20061025">2006년 하반기</option>');
+  temp.append('<option value="20060726">2006년 상반기</option>');
+  temp.append('<option value="20051026">2005년 하반기</option>');
+  temp.append('<option value="20050430">2005년 상반기</option>');
+  temp.append('<option value="20041030">2004년 하반기</option>');
+  temp.append('<option value="20040605">2004년 상반기</option>');
+  temp.append('<option value="20031030">2003년 하반기</option>');
+  temp.append('<option value="20030424">2003년 상반기</option>');
+  temp.append('<option value="20020808">2002년 상반기</option>');
+            
+if(electionType == '11'){
+  temp.append('<option value="20100602">제5회</option>');
+  temp.append('<option value="20090408">경기도교육감선거</option>');
+  temp.append('<option value="20081217">대전교육감선거</option>');
+  temp.append('<option value="20080730">서울교육감선거</option>');
+  temp.append('<option value="20080723">전북교육감선거</option>');
+  temp.append('<option value="20080625">충남교육감선거</option>');
+  temp.append('<option value="20070214">부산교육감선거</option>');
+
+//20110211 대통령 선거중에서 구시군이 안나오는 것 삭제 로직
+  removeOption("electionName",19480720);
+  removeOption("electionName",19721223);
+  removeOption("electionName",19780706);
+  removeOption("electionName",19791206);
+  removeOption("electionName",19800827);
+  removeOption("electionName",19810225);
+
+ 

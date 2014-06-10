@@ -6,6 +6,9 @@ http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?requestURI=%2Felect
 
 http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?requestURI=%2Felectioninfo%2F0000000000%2Fvc%2Fvccp09.jsp&statementId=VCCP02_%231&electionName=20071219&electionCode=1&cityCode=2600
 
+## 개표진행(투표구별)
+http://info.nec.go.kr/electioninfo/electionInfo_report.action?electionId=0000000000&requestURI=%2Felectioninfo%2F0000000000%2Fvc%2Fvccp08.jsp&topMenuId=VC&secondMenuId=VCCP&menuId=VCCP08&statementId=VCCP08_%233&oldElectionType=1&electionType=1&electionName=20071219&electionCode=1&cityCode=1100&townCode=1101
+
 Arguments
 
 * electionName

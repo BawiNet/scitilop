@@ -1,25 +1,3 @@
-[cityCode]
-<select id='cityCode' name='cityCode' >
-<option class="o_01" value="-1" selected="selected">▽ 선 택</option>
-  <option value='1100' >서울특별시</option>
-  <option value='2600' >부산광역시</option>
-  <option value='2700' >대구광역시</option>
-  <option value='2800' >인천광역시</option>
-  <option value='2900' >광주광역시</option>
-  <option value='3000' >대전광역시</option>
-  <option value='3100' >울산광역시</option>
-  <option value='4100' >경기도</option>
-  <option value='4200' >강원도</option>
-  <option value='4300' >충청북도</option>
-  <option value='4400' >충청남도</option>
-  <option value='4500' >전라북도</option>
-  <option value='4600' >전라남도</option>
-  <option value='4700' >경상북도</option>
-  <option value='4800' >경상남도</option>
-  <option value='4900' >제주특별자치도</option>
-</select>
-
-[townCode]
 서울특별시
   <option value="1101" >종로구</option>
   <option value="1102" >중구</option>

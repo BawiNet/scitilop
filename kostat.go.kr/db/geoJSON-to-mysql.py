@@ -6,7 +6,7 @@ import os
 import mysql.connector
 from datetime import date, datetime, timedelta
 
-db = mysql.connector.connect(user='root', password='2volutio',
+db = mysql.connector.connect(user='root', password='passwd',
                               host='127.0.0.1',
                               database='election_info')
 

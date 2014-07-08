@@ -8,7 +8,7 @@ from peewee import *
 import string
 import codecs
 
-db = MySQLDatabase( user='root', password='2volutio',
+db = MySQLDatabase( user='root', password='passwd',
                               host='127.0.0.1',
                               database='election_info' )
 

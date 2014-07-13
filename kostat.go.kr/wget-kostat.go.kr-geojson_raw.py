@@ -27,20 +27,20 @@ for line in f_list:
     tmp_code = tokens[0]
     if( tmp_code != '39' ):
         continue
-    tmp_unit_name = tokens[1]
-#json_data = open('unit_boundary.2014.00.1.geojson')
+    tmp_region_name = tokens[1]
+#json_data = open('region_boundary.2014.00.1.geojson')
 #data = json.load(json_data)
 #for tmp in data['features']:
 #    tmp_code = tmp['properties']['Name']
-#    tmp_unit_name = tmp['properties']['Description']
+#    tmp_region_name = tmp['properties']['Description']
 
-    json_2014 = gzip.open('geojson/unit_boundary.2014.%s.%s.geojson.gz'%(tmp_code,query_step),'rb')
+    json_2014 = gzip.open('geojson_raw/region_boundary.2014.%s.%s.geojson.gz'%(tmp_code,query_step),'rb')
     data_2014 = json.load(json_2014)
     tmp_out = {'type':'FeatureCollections','features':[]}
-    filename_out = 'unit_boundary.%s.%s.%d.geojson'%(query_year,tmp_code,query_step)
+    filename_out = 'region_boundary.%s.%s.%d.geojson'%(query_year,tmp_code,query_step)
     for tmp in data_2014['features']:
         tmp_code2 = tmp['properties']['Name']
-        tmp_unit_name2 = tmp['properties']['Description']
+        tmp_region_name2 = tmp['properties']['Description']
 
         tmp_var = {'key':api_key, 'year':query_year, 'code':tmp_code2}
         tmp_url = url_template.substitute(tmp_var)

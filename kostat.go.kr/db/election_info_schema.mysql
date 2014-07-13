@@ -1,0 +1,97 @@
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Server version:               5.5.31-MariaDB - mariadb.org binary distribution
+-- Server OS:                    Win64
+-- HeidiSQL Version:             8.0.0.4396
+-- --------------------------------------------------------
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+
+-- Dumping database structure for election_info
+CREATE DATABASE IF NOT EXISTS `election_info` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `election_info`;
+
+
+-- Dumping structure for table election_info.area_info
+CREATE TABLE IF NOT EXISTS `area_info` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `sig_lvl` char(1) NOT NULL DEFAULT '0',
+  `sig_cd` varchar(50) NOT NULL DEFAULT '0',
+  `sig_nm` varchar(100) NOT NULL DEFAULT '0',
+  `valid_from` date NOT NULL,
+  `valid_to` date NOT NULL,
+  `coord_sys` varchar(100) NOT NULL,
+  `geoJSON` longtext NOT NULL,
+  `prev_id` int(11) DEFAULT NULL,
+  `next_id` int(11) DEFAULT NULL,
+  `parent_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `prev_id` (`prev_id`),
+  KEY `next_id` (`next_id`),
+  KEY `parent_id` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+
+
+-- Dumping structure for table election_info.election_info
+CREATE TABLE IF NOT EXISTS `election_info` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `elec_title` varchar(100) DEFAULT NULL,
+  `elec_lvl` char(1) DEFAULT NULL,
+  `elec_date` date DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+
+
+-- Dumping structure for table election_info.elec_area_info
+CREATE TABLE IF NOT EXISTS `elec_area_info` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `elec_lvl` char(1) NOT NULL DEFAULT '',
+  `elec_cd` varchar(50) NOT NULL DEFAULT '',
+  `elec_nm` varchar(100) NOT NULL DEFAULT '',
+  `valid_from` date DEFAULT NULL,
+  `valid_to` date DEFAULT NULL,
+  `coord_sys` varchar(50) DEFAULT NULL,
+  `geoJSON` longtext,
+  `prev_id` int(10) DEFAULT NULL,
+  `next_id` int(10) DEFAULT NULL,
+  `parent_id` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+
+
+-- Dumping structure for table election_info.elec_area_relation
+CREATE TABLE IF NOT EXISTS `elec_area_relation` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `elec_area_info_id` int(10) NOT NULL DEFAULT '0',
+  `area_info_id` int(10) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `elec_area_id` (`elec_area_info_id`),
+  KEY `area_id` (`area_info_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+
+
+-- Dumping structure for table election_info.elec_elec_area_relation
+CREATE TABLE IF NOT EXISTS `elec_elec_area_relation` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `election_info_id` int(10) NOT NULL DEFAULT '0',
+  `elec_area_info_id` int(10) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `elec_info` (`election_info_id`),
+  KEY `elec_area_info` (`elec_area_info_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

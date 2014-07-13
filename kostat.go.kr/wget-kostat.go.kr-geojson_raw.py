@@ -21,7 +21,7 @@ query_year='1980'
 query_step = 2
 url_template = string.Template('http://sgis.kostat.go.kr/OpenAPI2/adminBoundaryByCYL.do?apikey=$key&format=geojson&code=$code&year=$year&level=LEVEL_00')
 
-f_list = open('code_list.00.txt','r')
+f_list = open('region_code.1.txt','r')
 for line in f_list:
     tokens = line.strip().split("\t")
     tmp_code = tokens[0]

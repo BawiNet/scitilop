@@ -11,11 +11,13 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
 -- Dumping database structure for election_info
+DROP DATABASE IF EXISTS `election_info`;
 CREATE DATABASE IF NOT EXISTS `election_info` /*!40100 DEFAULT CHARACTER SET utf8 */;
 USE `election_info`;
 
 
 -- Dumping structure for table election_info.area_info
+DROP TABLE IF EXISTS `area_info`;
 CREATE TABLE IF NOT EXISTS `area_info` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `sig_lvl` char(1) NOT NULL DEFAULT '0',
@@ -37,7 +39,22 @@ CREATE TABLE IF NOT EXISTS `area_info` (
 -- Data exporting was unselected.
 
 
+-- Dumping structure for table election_info.candidate_info
+DROP TABLE IF EXISTS `candidate_info`;
+CREATE TABLE IF NOT EXISTS `candidate_info` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `candidate_num` int(10) NOT NULL DEFAULT '0',
+  `election_info_id` int(10) NOT NULL DEFAULT '0',
+  `person_info_id` int(10) NOT NULL DEFAULT '0',
+  `party_info_id` int(10) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+
+
 -- Dumping structure for table election_info.election_info
+DROP TABLE IF EXISTS `election_info`;
 CREATE TABLE IF NOT EXISTS `election_info` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `elec_title` varchar(100) DEFAULT NULL,
@@ -50,6 +67,7 @@ CREATE TABLE IF NOT EXISTS `election_info` (
 
 
 -- Dumping structure for table election_info.elec_area_info
+DROP TABLE IF EXISTS `elec_area_info`;
 CREATE TABLE IF NOT EXISTS `elec_area_info` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `elec_lvl` char(1) NOT NULL DEFAULT '',
@@ -69,6 +87,7 @@ CREATE TABLE IF NOT EXISTS `elec_area_info` (
 
 
 -- Dumping structure for table election_info.elec_area_relation
+DROP TABLE IF EXISTS `elec_area_relation`;
 CREATE TABLE IF NOT EXISTS `elec_area_relation` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `elec_area_info_id` int(10) NOT NULL DEFAULT '0',
@@ -82,6 +101,7 @@ CREATE TABLE IF NOT EXISTS `elec_area_relation` (
 
 
 -- Dumping structure for table election_info.elec_elec_area_relation
+DROP TABLE IF EXISTS `elec_elec_area_relation`;
 CREATE TABLE IF NOT EXISTS `elec_elec_area_relation` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `election_info_id` int(10) NOT NULL DEFAULT '0',
@@ -89,6 +109,32 @@ CREATE TABLE IF NOT EXISTS `elec_elec_area_relation` (
   PRIMARY KEY (`id`),
   KEY `elec_info` (`election_info_id`),
   KEY `elec_area_info` (`elec_area_info_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+
+
+-- Dumping structure for table election_info.party_info
+DROP TABLE IF EXISTS `party_info`;
+CREATE TABLE IF NOT EXISTS `party_info` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `party_nm` varchar(50) DEFAULT NULL,
+  `valid_from` date DEFAULT NULL,
+  `valid_to` date DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Data exporting was unselected.
+
+
+-- Dumping structure for table election_info.person_info
+DROP TABLE IF EXISTS `person_info`;
+CREATE TABLE IF NOT EXISTS `person_info` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) DEFAULT NULL,
+  `sex` char(1) DEFAULT NULL,
+  `birthdate` date DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Data exporting was unselected.

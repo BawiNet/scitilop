@@ -60,7 +60,7 @@ sgg['features'] = features
 
 print sgg.keys()
 
-geoJSON = json.dumps( sgg, separators = (',', ':') ) + ";"
+geoJSON = json.dumps( sgg, separators = (',', ':') )
 
 f = codecs.open("2014_EMD.geojson", encoding='utf-8', mode='w')
 f.write ( geoJSON )

@@ -10,9 +10,9 @@ import csv, codecs, cStringIO
 import unicodedata
 from peewee import *
 
-DEBUG_POINT1 = 1
+DEBUG_POINT1 = 0
 DEBUG_POINT2 = 0
-DB_ACCESS_MODE = 0
+DB_ACCESS_MODE = 1
 prv_name = u"전라북도"
 election_name = u"201406지방선거"
 
@@ -86,6 +86,9 @@ def get_sigcd_from_prv_sgg_name(prv_name, sgg_name):
     #print "get_sigcd_from_prv_sgg_name : %s" % sgg_name
 
     lvl2_cd = None
+
+    if sgg_name == u'덕진구' or sgg_name == u'완산구':
+        sgg_name = u'전주시' + sgg_name
 
     for area in Area_Info.select().where(fn.Substr(Area_Info.sig_cd, 1, 2) == lvl1_cd, Area_Info.sig_nm == sgg_name): 
         lvl2_cd = area.sig_cd
@@ -248,27 +251,30 @@ for file_in_dir in files_in_dir:
         sgg_name = u""
 
         info_from_filename = base_filename.split("-")
-        election_type = info_from_filename[1][3:]  # 01_시도지사선거 이런 식으로 되어 있음.
+        election_type = info_from_filename[0] # 01_시도지사선거 이런 식으로 되어 있음.
 
-        if len(info_from_filename) == 3 and not (election_type == u'기초의원비례대표'):
+        if len(info_from_filename) == 2 and not (election_type == u'기초비례' or election_type == u'시장군수'):
             # 광역레벨의 경우
             sgg_name      = "" # will be imputed in the actual excel sheet
-            precinct_name = info_from_filename[2]
+            precinct_name = info_from_filename[1]
             election_level = 1
-            column_offset = 0 # 전라남도는 첫번째 컬럼이 시군구
-        elif len(info_from_filename) == 3:
-            # 기초의원비례대표의 경우
-            sgg_name      = info_from_filename[2] # 고흥군 이런 식
+            column_offset = 0 # 전라북도는 첫번째 컬럼이 시군구
+        elif len(info_from_filename) == 2:
+            # 시장군수 및 기초비례의 경우
+            sgg_name      = info_from_filename[1] # 고흥군 이런 식
             precinct_name = sgg_name # 같은 선거구
             election_level = 2
             column_offset = -1
-        elif len(info_from_filename) == 4:
-            sgg_name      = info_from_filename[2] # 읍면동개표자료(전남)-05_구시군의원-화순군-화순군나선거구
-            precinct_name = info_from_filename[3] #
+        elif len(info_from_filename) == 3:
+            sgg_name      = info_from_filename[1] # 시도의원-전주시완산구-전주시1
+            precinct_name = info_from_filename[2] #
             election_level = 2
             column_offset = -1
-            if election_type == u'구시군장':
-                sgg_name = precinct_name
+        elif len(info_from_filename) == 4: # 전주시덕진구 와 완산구
+            sgg_name      = info_from_filename[3]
+            precinct_name = info_from_filename[3]
+            election_level = 2
+            column_offset = -1
         else:
             print "Something is wrong with encoding or filename: %s" % base_filename.encode("utf8")
             raw_input()
@@ -321,7 +327,7 @@ for file_in_dir in files_in_dir:
                             if len(cn.split("\n")) > 1:
                                 [party, name] = cn.split("\n")
                             else:
-                                if election_type == u"광역의원비례대표" or election_type == u'기초의원비례대표':
+                                if election_type == u"광역비례" or election_type == u'기초비례':
                                     party = cn
                                     name  = cn
                                 else:
@@ -405,16 +411,17 @@ for file_in_dir in files_in_dir:
                             print "No match!!!! %s" % (emd_name)
     
                         # 통합동의 경우에는 그 수만큼 나눠서 더해주자. 이 경우 반내림을 하자.
-                        if (sgg_name == u"진주시" and emd_name == u"천전동"):
-                            emds = [u'망경동', u'강남동', u'칠암동']
-                        elif (sgg_name == u"진주시" and emd_name == u"성북동"):
-                            emds = [u'성지동', u'봉안동', u'신안동']
-                        elif (sgg_name == u"진주시" and emd_name == u"상봉동"):
-                            emds = [u'상봉동동', u'상봉서동']
-                        elif (sgg_name == u"진주시" and emd_name == u"충무공동"):
-                            emds = [u'문산읍', u'금산면'] # 호탄동은 존재하지 않는다.
-                        else:
-                            emds = [emd_name]
+#                        if (sgg_name == u"진주시" and emd_name == u"천전동"):
+#                            emds = [u'망경동', u'강남동', u'칠암동']
+#                        elif (sgg_name == u"진주시" and emd_name == u"성북동"):
+#                            emds = [u'성지동', u'봉안동', u'신안동']
+#                        elif (sgg_name == u"진주시" and emd_name == u"상봉동"):
+#                            emds = [u'상봉동동', u'상봉서동']
+#                        elif (sgg_name == u"진주시" and emd_name == u"충무공동"):
+#                            emds = [u'문산읍', u'금산면'] # 호탄동은 존재하지 않는다.
+#                        else:
+#                            emds = [emd_name]
+                        emds = [emd_name]
 
                         votes = map(int, values[5+column_offset:-3])
                         votes = [x/len(emds) for x in votes] # 통합된 동들의 경우 예전 동들에서 나눈다.

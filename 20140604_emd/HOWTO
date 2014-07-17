@@ -1,1 +1,7 @@
 http://stackoverflow.com/questions/75675/how-do-i-dump-the-data-of-some-sqlite3-tables
+
+For each directories, raw files are present.
+Run the associated python file to put it into a sqlite3 database.
+Note that you can use options in the first part of the python file
+to avoid putting data into the database (DB_ACESS_OPTION=0)
+Repetitive run of the python file will fill in the sqlite3 db (no uniqueness check)

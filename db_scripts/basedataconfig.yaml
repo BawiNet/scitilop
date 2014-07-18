@@ -1,0 +1,10 @@
+area_info: { type: dir, location: geojson_WGS84 }
+election_info: { type: file, location: election_info.json }
+elec_area_info: { type: file, location: elec_area_info.json }
+elec_area_relation: { type: file, location: elec_area_relation.json }
+elec_elec_area_relation: { type: file, location: elec_elec_area_relation.json }
+#party_info: { type: file, location: party_info.json }
+#person_info: { type: file, location: person_info.json }
+#candidate_info: { type: file, lcoation: candidate_info.json }
+#counting_info: { type: file, location: counting_info.json }
+#election_result: { type: file, location: election_result.json }

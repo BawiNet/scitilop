@@ -76,17 +76,19 @@ class elec_elec_area_relation( data_model  ):
 class party_info( data_model ):
 	id = PrimaryKeyField()
 	party_nm = CharField()
-	wikipedia_link = CharField()
+	wikipedia_link = CharField( null = True )
 	valid_from = DateField()
 	valid_to = DateField()
+	prev_party = ForeignKeyField( 'self', related_name = 'succeeded_by', null = True )
+	next_party = ForeignKeyField( 'self', related_name = 'preceded_by', null = True )
 	
 class person_info( data_model ):
 	id = PrimaryKeyField()
 	name = CharField()
-	hanja = CharField()
-	wikipedia_link = CharField()
+	hanja = CharField( null = True )
+	wikipedia_link = CharField( null = True )
 	sex = CharField()
-	birthdate = DateField()
+	birthdate = DateField( null = True )
 
 class candidate_info( data_model ):
 	id = PrimaryKeyField()
@@ -100,8 +102,8 @@ class counting_info( data_model ):
 	id = PrimaryKeyField()
 	election_info = ForeignKeyField( election_info )
 	elec_area_info = ForeignKeyField( elec_area_info )
-	area_info_id = IntegerField()
-	counting_time = DateTimeField()
+	area_info = ForeignKeyField( area_info, null = True )
+	counting_time = DateTimeField( null = True )
 	counting_percent = FloatField()
 	vote_count = IntegerField()
 	invalid_count = IntegerField()

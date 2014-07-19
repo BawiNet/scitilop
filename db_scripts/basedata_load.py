@@ -195,3 +195,213 @@ if key in basedata_config.keys():
 							earel.save()
 						else:
 							print "already exist", elec_cd, sig_cd, earel.id
+
+''' 정당정보 입력 '''
+key = 'party_info'
+if key in basedata_config.keys():
+	print "loading", key
+	info_type = basedata_config[key]['type']
+	if info_type == 'file':
+		filename = basedata_config[key]['location']
+		json_file = open( filename, 'r' )
+		party_data_hash = json.load( json_file )
+		json_file.close()
+		for party_rep_nm in party_data_hash.keys():
+			party_info_list = party_data_hash[party_rep_nm]
+			party_list = []
+			for party_data in party_info_list:
+				party_nm, valid_from, valid_to = party_data
+				try:
+					party = party_info.get( ( party_info.party_nm == party_nm ) & ( party_info.valid_from == valid_from ) )
+				except party_info.DoesNotExist:
+					print "new party data", party_nm, valid_from, valid_to
+					party = party_info()
+					party.party_nm = party_nm
+					party.valid_from = valid_from
+					party.valid_to = valid_to
+					if len( party_list ) > 0 :
+						party.next_party = party_list[-1].id
+					party.save()
+					if len( party_list ) > 0 :
+						party_list[-1].prev_party = party.id
+						party_list[-1].save()
+					party_list.append( party )
+				else:
+					print "already exist", party_nm, valid_from
+
+
+''' 730 재보선 후보자 정보 입력 '''
+key = 'candidate_info'
+if key in basedata_config.keys():
+	print "loading", key
+	info_type = basedata_config[key]['type']
+	if info_type == 'file':
+		filename = basedata_config[key]['location']
+		json_file = open( filename, 'r' )
+		candidate_data_hash = json.load( json_file )
+		json_file.close()
+		for elec_date in candidate_data_hash.keys():
+			try:
+				election = election_info.get( election_info.elec_date == elec_date )
+			except election_info.DoesNotExist:
+				print "no election info on", elec_date
+				continue
+						
+			elec_area_candidate_hash = candidate_data_hash[elec_date]
+			for elec_area_cd in elec_area_candidate_hash.keys():
+				try:
+					elec_area = elec_area_info.get( elec_area_info.elec_cd == elec_area_cd )
+				except elec_area_info.DoesNotExist:
+					print "no such elec_area", elec_area_cd
+					continue
+					
+				candidate_list = elec_area_candidate_hash[elec_area_cd]
+				for candidate_data in candidate_list:
+					party_nm, cand_num, name, hanja, sex, birthdate = candidate_data
+					
+					try:
+						party = party_info.get( ( party_info.party_nm == party_nm ) & (party_info.valid_from < elec_date ) & ( party_info.valid_to > elec_date ) )
+					except party_info.DoesNotExist:
+						print "adding new party", party_nm 
+						party = party_info()
+						party.party_nm = party_nm
+						party.valid_from = elec_date[:4] + "-01-01"
+						party.valid_to = "9999-12-31"
+						party.save()
+					
+					try:
+						person = person_info.get( ( person_info.name == name ) & (person_info.sex == sex ) & ( person_info.birthdate == birthdate ) )
+					except person_info.DoesNotExist:
+						print "adding new person", name, sex, birthdate
+						person = person_info()
+						person.name = name
+						person.sex = sex
+						person.hanja = hanja
+						person.birthdate = birthdate
+						person.save()
+
+					try:					
+						candidate = candidate_info.get(	( candidate_info.election_info == election.id ) & 
+																			( candidate_info.elec_area_info == elec_area.id ) &
+																			( candidate_info.party_info == party.id ) &
+																			( candidate_info.person_info == person.id ) )
+					except candidate_info.DoesNotExist:
+						print "adding candidate", election.elec_date, elec_area.elec_nm, party.party_nm, person.name
+						candidate = candidate_info()
+						candidate.election_info = election.id
+						candidate.elec_area_info = elec_area.id
+						candidate.party_info = party.id
+						candidate.person_info = person.id
+						candidate.candidate_num = cand_num
+						candidate.save()
+					else:
+						print "already exist", election.elec_date, elec_area.elec_nm, party.party_nm, person.name
+		
+
+''' 역대 선거 결과 입력 '''
+key = 'election_result'
+if key in basedata_config.keys():
+	print "loading", key
+	info_type = basedata_config[key]['type']
+	if info_type == 'file':
+		filename = basedata_config[key]['location']
+		print filename
+		json_file = open( filename, 'r' )
+		#json_data = json_file.read()
+		#print json_data
+		#result_data_hash = json.loads( json_data )
+		result_data_hash = json.load( json_file)
+		json_file.close()
+
+
+		for elec_date in result_data_hash.keys():
+			try:
+				elec = election_info.get( election_info.elec_date == elec_date )
+			except election_info.DoesNotExist:
+				print "no such election!"
+				continue
+			
+			print elec.elec_title, elec.elec_date
+			for elec_area_cd in result_data_hash[elec_date].keys():
+				try:
+					elec_area = elec_area_info.get( elec_area_info.elec_cd == elec_area_cd )
+				except elec_area_info.DoesNotExist:
+					print "no such elec_area!"
+					continue
+				print elec_area.elec_nm
+		
+				vote_result = result_data_hash[elec_date][elec_area_cd]['vote_result']
+				try:
+					counting = counting_info.get( ( counting_info.election_info == elec.id ) &
+																	( counting_info.elec_area_info == elec_area.id ) &
+																	( counting_info.counting_percent == 100.0 ) )
+				except counting_info.DoesNotExist:
+					print "counting_info add", elec.elec_title, elec_area.elec_nm, vote_result[1], "/", vote_result[0]
+					counting = counting_info()
+					counting.election_info = elec.id
+					counting.elec_area_info = elec_area.id
+					counting.counting_percent = 100.0
+					counting.total_count = vote_result[0]
+					counting.vote_count = vote_result[1]
+					counting.invalid_count = vote_result[2]
+					counting.abstention_count = vote_result[3]
+					
+					counting.save()
+					print counting.election_info.elec_title, counting.elec_area_info.elec_nm, counting.counting_percent
+		
+				vote_result_list = result_data_hash[elec_date][elec_area_cd]['candidate_result']
+				for vote_result in vote_result_list:
+					candidate_num, party_nm, candidate_nm, sex, vote_count, vote_percent = vote_result
+					print "  ",party_nm, candidate_nm
+					try:
+						party = party_info.get( ( party_info.party_nm == party_nm ) & ( party_info.valid_from < elec_date  ) & ( party_info.valid_to > elec_date ) )
+					except party_info.DoesNotExist:
+						print "adding party", party_nm, elec_date
+						party = party_info()
+						party.party_nm = party_nm
+						party.valid_from = elec_date[:4] + "-01-01"
+						party.valid_to = "9999-12-31"
+						party.save()
+					else:
+						print "already exist", party_nm
+		
+					try:
+						person = person_info.get( ( person_info.name == candidate_nm ) & ( person_info.sex == sex ) ) # 후보자 정보 동명이인 확인할 것.
+					except person_info.DoesNotExist:
+						print "adding person", candidate_nm
+						person = person_info()
+						person.name = candidate_nm
+						person.sex = sex
+						person.birthdate = None
+						person.save()
+					
+					#print "find:", elec.elec_title, elec_area.elec_nm, party.party_nm, person.id, person.name
+					try:
+						print "find candidate", elec.id,elec_area.id, party.id, person.id, person.name
+						candidate = candidate_info.get( ( candidate_info.election_info == elec.id ) &
+																			( candidate_info.elec_area_info == elec_area.id ) &
+																			( candidate_info.person_info == person.id ) &
+																			( candidate_info.party_info == party.id ) )
+					except candidate_info.DoesNotExist:
+						print "adding candidate", elec.id,elec.elec_title,elec_area.elec_nm, party.party_nm, person.name
+						candidate = candidate_info()
+						candidate.election_info = elec.id
+						candidate.elec_area_info = elec_area.id
+						candidate.party_info = party.id
+						candidate.person_info = person.id
+						candidate.candidate_num = candidate_num
+						candidate.save()
+					else:
+						
+						print "already_exist:", candidate.election_info.elec_title, candidate.elec_area_info.elec_nm, candidate.party_info.party_nm, candidate.person_info.id, candidate.person_info.name
+		
+					try:
+						eresult = election_result.get( ( election_result.counting_info == counting.id ) & (election_result.candidate_info == candidate.id ) )
+					except election_result.DoesNotExist:
+						print "adding result", elec.elec_title, elec_area.elec_nm, candidate.person_info.name, vote_count, vote_percent
+						eresult = election_result()
+						eresult.counting_info = counting.id
+						eresult.candidate_info = candidate.id
+						eresult.vote_count = vote_count
+						eresult.vote_percent = vote_percent
+						eresult.save()

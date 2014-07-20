@@ -12,10 +12,11 @@ from peewee import *
 
 DEBUG_POINT1 = 0 # 파일명 파싱이 잘 되는가
 DEBUG_POINT2 = 1 # 개별 row를 출력하도록 한다.
-DEBUG_POINT3 = 0 # 후보자 save 
+DEBUG_POINT3 = 1 # 후보자 save 
 DEBUG_POINT4 = 0 # 개별 선거결과 save 
 DEBUG_HEADER = 0 # 헤더의 경우 다음 줄과 함께 봄
 DEBUG_EACHFILE = 0 # 각 파일별로 raw_input를 받음 (DEBUG_POINT2와 함께 쓸 것)
+DEBUG_INPUT  = 0 # additional option for DEBUG_POINT3 & DEBUG_POINT4
 DB_ACCESS_MODE = 0
 prv_name = u"강원도"
 election_name = u"201406지방선거"
@@ -151,9 +152,8 @@ def save_election_info(election_name, election_type, election_level, prv_name, s
 
     if DEBUG_POINT4:
         print "election save: sgg_name = %s sig_cd = %s count_type = %s count = %d" % (
-            sgg_name.encode("utf8"), sig_cd.encode("utf8"), total_type.encode("utf8"), vote
+            sgg_name.encode("utf8"), e.sig_cd.encode("utf8"), total_type.encode("utf8"), vote
         )
-        raw_input()
 
 def save_candidate_info(election_name, election_type, election_level, column_offset, prv_name, sgg_name, precinct_name, name, party):
     candidate = Candidate_Info()
@@ -260,6 +260,9 @@ for file_in_dir in files_in_dir:
             precinct_name = sgg_name # 같은 선거구
             election_level = 2
             column_offset = -1
+            if election_type == u'기초의원비례대표':
+                column_offset = 0
+                sgg_name = ""
         elif len(info_from_filename) == 3:
             sgg_name      = info_from_filename[1]  # 03_시도의원-강릉시-강릉제1선거구
             precinct_name = info_from_filename[2]  #
@@ -269,23 +272,34 @@ for file_in_dir in files_in_dir:
             print "Something is wrong with encoding or filename: %s" % base_filename.encode("utf8")
             raw_input()
 
-        if sgg_name == u"춘천시" and election_type == u"시도의원":
+        if sgg_name == u"춘천시" and (election_type == u"시도의원" or election_type == u"구시군의원"):
             # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
             column_offset = 0
             
-        if sgg_name == u"태백시" and election_type == u"시도의원":
+        if sgg_name == u"태백시" and (election_type == u"시도의원" or election_type == u"구시군의원"):
             # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
             column_offset = 0
         
-        if sgg_name == u"횡성군" and election_type == u"시도의원":
+        if sgg_name == u"횡성군" and (election_type == u"시도의원" or election_type == u"구시군의원"):
             # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
             column_offset = 0
         
-        if sgg_name == u"삼척시" and election_type == u"구시군의원":
+        if sgg_name == u"영월군" and (election_type == u"시도의원" or election_type == u"구시군의원"):
+            # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
+            column_offset = 0
+        if sgg_name == u"정선군" and (election_type == u"시도의원" or election_type == u"구시군의원"):
             # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
             column_offset = 0
 
-        if sgg_name == u"속초시" and election_type == u"구시군의원":
+        if sgg_name == u"삼척시" and election_type == u"구시군의원":
+            # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
+            column_offset = 0
+        
+        if sgg_name == u"인제군" and election_type == u"구시군의원":
+            # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
+            column_offset = 0
+
+        if sgg_name == u"속초시" and (election_type == u"구시군의원" or election_type == u"시도의원"):
             # 엑셀 정리하다 포기. 하나씩 예외구문 만들자.
             column_offset = 0
 
@@ -296,6 +310,8 @@ for file_in_dir in files_in_dir:
             continue;
 
         election_types[election_type] = 1; # dictionary (legacy)
+        if election_type != u"구시군의원":
+            continue
 
         wb = open_workbook(file_in_dir)
         candidate_id = range(100) # just making an array (I don't know what to do)
@@ -322,6 +338,9 @@ for file_in_dir in files_in_dir:
             # 경우에 따라서 header가 4줄이기도 5줄이기도 하다.
             header_flag = True
             split_flag = False
+            bigo_check_flag = False
+            bigo_offset = -1
+            candidate_size = 0
             for rownum in xrange(sh.nrows):
                 # this should also clean up all commas, and make utf-8
                 values = map(just_all_utf8_str, sh.row_values(rownum))
@@ -337,7 +356,35 @@ for file_in_dir in files_in_dir:
                         print "row#" + str(rownum+1) + "::".join(values2)
                     # this is the header, and should be processed to add 의원 info
 
-                    elif (values[1] == "" ) and values[6+column_offset][:4] != "": 
+                    # "비고"가 있는 경우가 있고 없는 경우가 있다.
+                    # 이를 확인하기 위해서, 첫번째 헤더를 마주칠 때 (두 번째 컬럼이 채워져있을 때)
+                    if values[3+column_offset] != "" and not bigo_check_flag:
+                        # 비고를 체크하기 위한 줄이다.
+                        bigo_check_flag = True
+
+                        if values[-1].decode('utf8').replace(" ","")[:2] == u"비고":
+                            if DEBUG_POINT3:
+                                print "비고있음"
+                            bigo_offset = -1
+                        elif values[-1].decode('utf8').replace(" ","")[:2] == u"" and values[-2].decode('utf8').replace(" ","")[:2] == u"비고":
+                            if DEBUG_POINT3:
+                                print "비고있고 공백도있음"
+                            bigo_offset = -2
+                        elif values[-1].decode('utf8').replace(" ","")[:2] == u"":
+                            if DEBUG_POINT3:
+                                print "공백이 하나 있음"
+                            bigo_offset = -1
+                        else:
+                            if DEBUG_POINT3:
+                                print "비고없음"
+                            bigo_offset = 0
+                    # 경우에 따라선 컬럼 자체가 추가되어 있어서 더 빼야하는 경우도 있다.
+                    elif values[3+column_offset] != "" and values[-1].decode('utf8').replace(" ","")[:2] == "":
+                        if not bigo_check_flag:
+                            if DEBUG_POINT3:
+                                print "공백이 있음."
+                    
+                    if (values[3+column_offset] == "" ) and values[6+column_offset][:4] != "": 
                         # 속초같이 시군구를 입력한 경우 첫번째 열이 공란이 아니다. 두 번째 열을 보자.
                         # 강원도는 경우에 따라서 후보자가 3번쨰 줄에도 4번째 줄에도 있기도 하다
                         # 차라리 후보자칸 두 번째 칸이 안 빈 경우 (후보는 2명 이상이니까)
@@ -353,8 +400,10 @@ for file_in_dir in files_in_dir:
                             header_flag = False
                             continue
                         index = 0
-                        for cn in values[5+column_offset:-4]:
+                        for cn in values[5+column_offset:-3+bigo_offset]:
                             cn = cn.decode("utf8")
+                            if cn == "":  #공백으로 후보자란이 뒤에 붙는 경우가 있다.
+                                break
                             if len(cn.split("\n")) > 1 and not split_flag:
                                 temp = cn.split("\n")
                                 name  = temp[-1].replace(" ","") # 가끔씩 \n이 여러 번 쳐진 경우가 있는 듯.
@@ -368,13 +417,14 @@ for file_in_dir in files_in_dir:
                                         # 당명만 있는 경우다
                                         # !#@%)(!#&*%#*^& 진짜 이 짓을 하는 내가 바보.
                                         party = cn.replace("\n","")
-                                        name = values2[5+column_offset:-4][index].decode("utf8").replace(" ","")
+                                        name = values2[5+column_offset:-3+bigo_offset][index].decode("utf8").replace(" ","")
                                         split_flag = True
                                     else:
                                         party = ""
                                         name = cn.replace(" ","")
 
-                            if election_level == 1: #광역레벨일 경우에 그렇게 써줘야한다.
+                            if election_level == 1 or election_type == u"기초의원비례대표": #광역레벨일 경우에 그렇게 써줘야한다.
+                                # 기초비례대표의원의 경우 광역레벨로 저장하자.
                                 candidate_id[index] = save_candidate_info(
                                     election_name, 
                                     election_type, 
@@ -400,8 +450,12 @@ for file_in_dir in files_in_dir:
                                 )
     
                             index = index + 1
+                        candidate_size = index
                         if DEBUG_POINT3:
+                            print "candidate_size = %d" % candidate_size
+                        if DEBUG_POINT3 and DEBUG_INPUT:
                             raw_input()
+
                         if split_flag:
                             "이 flag는 다음 줄에서 해제한다."
                         else:
@@ -409,21 +463,27 @@ for file_in_dir in files_in_dir:
                     else: # useless header (1-3)
                         "this is useless header (1-3)"
                 else: 
+                    if not bigo_check_flag:
+                        print "DID NOT CHECKED BIGO!"
                     # 이제 헤더가 아니기때문에 확인해야한다.
-                    if column_offset >= 0 and election_level == 1: # 광역레벨인 경우에는 첫 컬럼이 시군구 선관위명이다.
+                    if column_offset >= 0 and (election_level == 1 or election_type == u"기초의원비례대표"): # 광역레벨인 경우에는 첫 컬럼이 시군구 선관위명이다.
                         sgg_name = values[0].decode("utf8").replace("\n","") # sometimes they have \n
+                        if (election_type == u"기초비례대표"):
+                            precinct_name = sgg_name
                         if (sgg_name == prv_name):
                             #경상남도의 경우 광역레벨의 합계도 있는데, 이건 걍 빼자.
                             continue
                     else:
                         "otherwise, you have already sgg_name from filename"
     
-                    column1 = values[1+column_offset].decode("utf8").replace(" ","")
+                    column1 = values[1+column_offset].decode("utf8").replace(" ","").replace("\n","")
+                    if column1 == u"잘못투입된투표지":
+                        column1 = u"잘못투입·구분된투표지"
     
-                    if column1 == u"합계" or column1 == u"관외사전투표" or column1 == u"거소우편투표" or column1 == u"잘못 투입·구분된 투표지":
+                    if column1 == u"합계" or column1 == u"관외사전투표" or column1 == u"거소우편투표" or column1 == u"잘못투입·구분된투표지":
                         # 이 경우에는 시군구 레벨의 자료들로 구성되어 있으므로 해당 sig_cd를 찾아서 입력한다.
                         # election_level은 전체 선거구의 level임을 주의하자.
-                        votes = map(int, values[5+column_offset:-4])
+                        votes = map(int, values[5+column_offset:-3+bigo_offset][:candidate_size])
                         for ind_vote in range(len(votes)):
                             # 에러 메시지 생략. 어차피 읍면동 수준에서 걸릴 것임. 
                             save_election_info(
@@ -438,12 +498,17 @@ for file_in_dir in files_in_dir:
                                 column1, # 합계, 관외사전투표, 거소우편투표, 잘못 투입.구분된 투표지 모두 포함됨.
                                 votes[ind_vote]
                             )
-                    elif column1.find("/") == "-1": # 읍면동이 두 번째 컬럼이다
+                        if DEBUG_POINT4 and DEBUG_INPUT:
+                            raw_input()
+                    elif column1.find("/") == -1 and column1 != "": # 읍면동이 두 번째 컬럼이다
                         emd_name              = column1 # 행정동이름 (precinct_name 은 선거구 이름)
                         total_type            = values[2+column_offset].decode("utf8") # 소계/관내/일반
                         precinct_population   = int(values[3+column_offset])  # 유권자수
                         precinct_votetotal    = int(values[4+column_offset])  # 투표수
-                        precinct_disqualified = int(values[-3]) # 무효 
+                        precinct_disqualified = int(values[-2+bigo_offset]) # 무효 
+
+                        if total_type == "": #소계가 안 되어 있는 경우가 있다.
+                            total_type = u"소계"
     
                         # only do the ERROR once.
                         if error_emd_name == emd_name and error_sgg_name == sgg_name and error_flag:
@@ -453,7 +518,7 @@ for file_in_dir in files_in_dir:
                             error_sgg_name = u""
                             error_flag = False
     
-                        if int(values[-3]) + precinct_disqualified != precinct_votetotal:
+                        if int(values[-3+bigo_offset]) + precinct_disqualified != precinct_votetotal:
                             print "No match!!!! %s" % (emd_name)
     
                         # 통합동의 경우에는 그 수만큼 나눠서 더해주자. 이 경우 반내림을 하자.
@@ -469,7 +534,7 @@ for file_in_dir in files_in_dir:
 #                            emds = [emd_name]
                         emds = [emd_name]
 
-                        votes = map(int, values[5+column_offset:-4])
+                        votes = map(int, values[5+column_offset:-3+bigo_offset][:candidate_size])
                         votes = [x/len(emds) for x in votes] # 통합된 동들의 경우 예전 동들에서 나눈다.
                         for ind_vote in range(len(votes)):
                             for emd in emds:
@@ -493,6 +558,8 @@ for file_in_dir in files_in_dir:
                                         total_type,
                                         votes[ind_vote]
                                     )
+                        if DEBUG_POINT4 and DEBUG_INPUT:
+                            raw_input()
                     else:
                         "some empty rows probably last line problem"
         if DEBUG_EACHFILE:

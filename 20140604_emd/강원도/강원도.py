@@ -11,8 +11,8 @@ import unicodedata
 from peewee import *
 
 DEBUG_POINT1 = 0 # 파일명 파싱이 잘 되는가
-DEBUG_POINT2 = 1 # 개별 row를 출력하도록 한다.
-DEBUG_POINT3 = 1 # 후보자 save 
+DEBUG_POINT2 = 0 # 개별 row를 출력하도록 한다.
+DEBUG_POINT3 = 0 # 후보자 save 
 DEBUG_POINT4 = 0 # 개별 선거결과 save 
 DEBUG_HEADER = 0 # 헤더의 경우 다음 줄과 함께 봄
 DEBUG_EACHFILE = 0 # 각 파일별로 raw_input를 받음 (DEBUG_POINT2와 함께 쓸 것)
@@ -310,8 +310,6 @@ for file_in_dir in files_in_dir:
             continue;
 
         election_types[election_type] = 1; # dictionary (legacy)
-        if election_type != u"구시군의원":
-            continue
 
         wb = open_workbook(file_in_dir)
         candidate_id = range(100) # just making an array (I don't know what to do)

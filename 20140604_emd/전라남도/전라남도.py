@@ -18,7 +18,7 @@ DEBUG_HEADER = 0 # 헤더의 경우 다음 줄과 함께 봄
 DEBUG_EACHFILE = 0 # 각 파일별로 raw_input를 받음 (DEBUG_POINT2와 함께 쓸 것)
 DEBUG_INPUT  = 0 # additional option for DEBUG_POINT3 & DEBUG_POINT4
 DB_ACCESS_MODE = 0
-prv_name = u"강원도"
+prv_name = u"전라남도"
 election_name = u"201406지방선거"
 
 
@@ -254,13 +254,11 @@ for file_in_dir in files_in_dir:
             precinct_name = info_from_filename[2]
             election_level = 1
             column_offset = 0 # 전라남도는 첫번째 칼럼이 시군구.
-        elif len(info_from_filename) == 3:
+        elif len(info_from_filename) == 3: # 기초의원비례대표의 경우.
+            sgg_name = info_from_filename[2]
             precinct_name = sgg_name # 같은 선거구
             election_level = 2
             column_offset = -1
-            if election_type == u'기초의원비례대표':
-                column_offset = 0
-                sgg_name = ""
         elif len(info_from_filename) == 4:
             sgg_name      = info_from_filename[2]  # 읍면동개표자료(전남)-05_구시군의원-화순군-화순군나선거구
             precinct_name = info_from_filename[3]  #
@@ -268,6 +266,8 @@ for file_in_dir in files_in_dir:
             column_offset = -1
             if election_type == u'구시군장':
                 sgg_name = precinct_name
+            if election_type == u'시도의원':
+                column_offset = 0 # 시도의원자료는 한 칸씩 밀려있다.
         else:
             print "Something is wrong with encoding or filename: %s" % base_filename.encode("utf8")
             raw_input()
@@ -279,6 +279,8 @@ for file_in_dir in files_in_dir:
             continue;
 
         election_types[election_type] = 1; # dictionary (legacy)
+        #if election_type != u'기초의원비례대표':
+        #    continue
 
         wb = open_workbook(file_in_dir)
         candidate_id = range(100) # just making an array (I don't know what to do)
@@ -352,7 +354,7 @@ for file_in_dir in files_in_dir:
                         if not bigo_check_flag:
                             if DEBUG_POINT3:
                                 print "공백이 있음."
-                    
+                   
                     if (values[3+column_offset] == "" ) and values[6+column_offset][:4] != "": 
                         # 속초같이 시군구를 입력한 경우 첫번째 열이 공란이 아니다. 두 번째 열을 보자.
                         # 강원도는 경우에 따라서 후보자가 3번쨰 줄에도 4번째 줄에도 있기도 하다
@@ -424,6 +426,8 @@ for file_in_dir in files_in_dir:
                             print "candidate_size = %d" % candidate_size
                         if DEBUG_POINT3 and DEBUG_INPUT:
                             raw_input()
+                        if DEBUG_POINT3 and candidate_size == 0:
+                            raw_input()
 
                         if split_flag:
                             "이 flag는 다음 줄에서 해제한다."
@@ -489,7 +493,12 @@ for file_in_dir in files_in_dir:
     
                         if int(values[-3+bigo_offset]) + precinct_disqualified != precinct_votetotal:
                             print "No match!!!! %s" % (emd_name)
-    
+   
+                        # 나주시 빛가람동은 산포면과 금천면의 일부 리들을 떼어서 만든 것이다.
+                        # 따라서 산포면과 금천면에 각각 반절씩 집어넣자.
+
+                        if (sgg_name == u"나주시" and emd_name == u"빛가람동"):
+                            emds = [u'산포면', u'금천면'] 
                         # 통합동의 경우에는 그 수만큼 나눠서 더해주자. 이 경우 반내림을 하자.
 #                        if (sgg_name == u"진주시" and emd_name == u"천전동"):
 #                            emds = [u'망경동', u'강남동', u'칠암동']
@@ -499,9 +508,8 @@ for file_in_dir in files_in_dir:
 #                            emds = [u'상봉동동', u'상봉서동']
 #                        elif (sgg_name == u"진주시" and emd_name == u"충무공동"):
 #                            emds = [u'문산읍', u'금산면'] # 호탄동은 존재하지 않는다.
-#                        else:
-#                            emds = [emd_name]
-                        emds = [emd_name]
+                        else:
+                            emds = [emd_name]
 
                         votes = map(int, values[5+column_offset:-3+bigo_offset][:candidate_size])
                         votes = [x/len(emds) for x in votes] # 통합된 동들의 경우 예전 동들에서 나눈다.

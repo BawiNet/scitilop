@@ -107,6 +107,11 @@ def get_sigcd_from_prv_sgg_name(prv_name, sgg_name):
 def get_sigcd_from_prv_sgg_emd_name(prv_name, sgg_name, emd_name):
     # we have sgg_name and emd_name for each EMD or SGG level election result
     # to avoid any redundant same name problem, start from the highest level
+
+    if emd_name == u'쌍용2동':
+        #천안시 동남구는 선거구상 동남구로 편입되었지만 코드는 서북구다.
+        sgg_name = u'천안시서북구'
+
     lvl2_cd = get_sigcd_from_prv_sgg_name(prv_name, sgg_name)
     #print "get_sigcd_from_prv_sgg_emd_name : %s" % emd_name
 
@@ -117,6 +122,13 @@ def get_sigcd_from_prv_sgg_emd_name(prv_name, sgg_name, emd_name):
 #        #raw_input() 
 
     lvl3_cd = None
+
+    # 천안시 백성동/부성동: 2013년 10월 14일 백석동과 부성동을 각각 백석동/불당동, 부성1동/부성2동으로 분동(30개 읍면동)
+    if emd_name == u'부성1동' or emd_name == u'부성2동':
+        emd_name = u'부성동'
+
+    if emd_name == u'불당동':
+        emd_name = u'백석동'
 
     for area in Area_Info.select().where(fn.Substr(Area_Info.sig_cd, 1, 5) == lvl2_cd, Area_Info.sig_nm == emd_name):
         lvl3_cd = area.sig_cd

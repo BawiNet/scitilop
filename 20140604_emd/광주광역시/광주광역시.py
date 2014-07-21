@@ -484,7 +484,7 @@ for file_in_dir in files_in_dir:
                         # only do the ERROR once.
                         if error_emd_name == emd_name and error_sgg_name == sgg_name and error_flag:
                             continue
-                       # else:
+                        else:
                             error_emd_name = u""
                             error_sgg_name = u""
                             error_flag = False

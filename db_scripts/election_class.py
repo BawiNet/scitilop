@@ -114,3 +114,4 @@ class election_result( data_model ):
 	candidate_info = ForeignKeyField( candidate_info )
 	vote_count = IntegerField()
 	vote_percent = FloatField()
+	elected = BooleanField( default = False )

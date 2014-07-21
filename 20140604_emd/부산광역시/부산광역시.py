@@ -514,17 +514,11 @@ for file_in_dir in files_in_dir:
                         # 따라서 산포면과 금천면에 각각 반절씩 집어넣자.
 
                         # 통합동의 경우에는 그 수만큼 나눠서 더해주자. 이 경우 반내림을 하자.
-                        if (sgg_name == u"진주시" and emd_name == u"천전동"):
-                            emds = [u'망경동', u'강남동', u'칠암동']
-                        elif (sgg_name == u"진주시" and emd_name == u"성북동"):
-                            emds = [u'성지동', u'봉안동', u'신안동']
-                        elif (sgg_name == u"진주시" and emd_name == u"상봉동"):
-                            emds = [u'상봉동동', u'상봉서동']
-                        elif (sgg_name == u"진주시" and emd_name == u"충무공동"):
-                            emds = [u'문산읍', u'금산면'] # 호탄동은 존재하지 않는다.
+#                        emds = [emd_name]
+                        if (sgg_name == u'남구' and emd_name == u'우암동'):
+                            emds = [u'우암1동',u'우암2동']
                         else:
                             emds = [emd_name]
-#                        emds = [emd_name]
 
                         votes = map(int, values[5+column_offset:-3+bigo_offset][:candidate_size])
                         votes = [x/len(emds) for x in votes] # 통합된 동들의 경우 예전 동들에서 나눈다.

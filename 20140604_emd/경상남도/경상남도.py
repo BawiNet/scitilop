@@ -296,7 +296,7 @@ for file_in_dir in files_in_dir:
             continue;
 
         election_types[election_type] = 1; # dictionary (legacy)
-        #if election_type != u'광역의원비례대표':
+        #if election_type != u'교육감':
         #    continue
 
         wb = open_workbook(file_in_dir)
@@ -411,7 +411,7 @@ for file_in_dir in files_in_dir:
                                         party = ""
                                         name = cn.replace(" ","")
 
-                            if election_level == 1 or election_type == u"기초비례": #광역레벨일 경우에 그렇게 써줘야한다.
+                            if election_level == 1 or election_type == u"기초의원비례대표": #광역레벨일 경우에 그렇게 써줘야한다.
                                 # 기초비례대표의원의 경우 광역레벨로 저장하자.
                                 candidate_id[index] = save_candidate_info(
                                     election_name, 
@@ -568,6 +568,8 @@ for file_in_dir in files_in_dir:
                                         total_type,
                                         votes[ind_vote]
                                     )
+                            if error_flag:
+                                break # break one more loop
                         if DEBUG_POINT4 and DEBUG_INPUT:
                             raw_input()
                     else:

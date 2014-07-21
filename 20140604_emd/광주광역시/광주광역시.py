@@ -115,6 +115,10 @@ def get_sigcd_from_prv_sgg_emd_name(prv_name, sgg_name, emd_name):
 #        emd_name = emd_name[:emd_name.rfind(u"제")] + emd_name[emd_name.rfind(u"제")+1:]
 #        #print emd_name.encode("utf8")
 #        #raw_input() 
+    # 양산동: 2013년 3월 18일 건국동을 건국동과 양산동으로 분동하였다.
+
+    if emd_name == u'양산동':
+        emd_name = u'건국동'
 
     lvl3_cd = None
 

@@ -12,9 +12,9 @@ from peewee import *
 
 DEBUG_POINT1 = 0 # 파일명 파싱이 잘 되는가
 DEBUG_POINT2 = 0 # 개별 row를 출력하도록 한다.
-DEBUG_POINT3 = 1 # 후보자 save 
+DEBUG_POINT3 = 0 # 후보자 save 
 DEBUG_POINT4 = 0 # 개별 선거결과 save 
-DEBUG_HEADER = 1 # 헤더의 경우 다음 줄과 함께 봄
+DEBUG_HEADER = 0 # 헤더의 경우 다음 줄과 함께 봄
 DEBUG_EACHFILE = 0 # 각 파일별로 raw_input를 받음 (DEBUG_POINT2와 함께 쓸 것)
 DEBUG_INPUT  = 0 # additional option for DEBUG_POINT3 & DEBUG_POINT4
 DB_ACCESS_MODE = 0
@@ -295,7 +295,11 @@ for file_in_dir in files_in_dir:
             column_offset = -1
         elif len(info_from_filename) == 4:
             # 일부 구시군의장 및 기초비례의원 / 모든 구시군의원, 시도의원
-            sgg_name      = info_from_filename[2][2:] # 37용인시기흥구
+            if election_type == u"구시군의장" or election_type == u"기초비례의원":
+                sgg_name = info_from_filename[3] # 성남시분당구
+                precinct_name = info_from_filename[2] # 성남시
+            else:
+                sgg_name      = info_from_filename[2][2:] # 37용인시기흥구
             precinct_name = info_from_filename[3]     # 용인시1
             election_level = 2
             column_offset = -1

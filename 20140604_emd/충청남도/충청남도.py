@@ -94,10 +94,6 @@ def get_sigcd_from_prv_sgg_name(prv_name, sgg_name):
     lvl1_cd = get_sigcd_from_prv_name(prv_name)
     #print "get_sigcd_from_prv_sgg_name : %s" % sgg_name
 
-    m = re.compile(u"^창원시")
-    if m.search(sgg_name): # 아원, 마산, 진해 통합시때문에 구 이름 앞에 창원시가 붙는다.
-        sgg_name = sgg_name.replace(u"창원시", "")
-
     lvl2_cd = None
 
     for area in Area_Info.select().where(fn.Substr(Area_Info.sig_cd, 1, 2) == lvl1_cd, Area_Info.sig_nm == sgg_name): 

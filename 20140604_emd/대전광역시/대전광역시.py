@@ -116,6 +116,9 @@ def get_sigcd_from_prv_sgg_emd_name(prv_name, sgg_name, emd_name):
 #        #print emd_name.encode("utf8")
 #        #raw_input() 
 
+    if emd_name == u'원신흥동':
+        emd_name = u'온천1동'
+
     lvl3_cd = None
 
     for area in Area_Info.select().where(fn.Substr(Area_Info.sig_cd, 1, 5) == lvl2_cd, Area_Info.sig_nm == emd_name):
@@ -479,7 +482,7 @@ for file_in_dir in files_in_dir:
                         # only do the ERROR once.
                         if error_emd_name == emd_name and error_sgg_name == sgg_name and error_flag:
                             continue
-                       # else:
+                        else:
                             error_emd_name = u""
                             error_sgg_name = u""
                             error_flag = False

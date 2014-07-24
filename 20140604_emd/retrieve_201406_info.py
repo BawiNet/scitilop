@@ -65,6 +65,55 @@ def get_area_full_info_from_emd(emd_cd):
 
     return [prv, sgg, emd]
 
+def get_standard_info_from_emd(emd_cd, et):
+    """읍면동 결과에서, 각 선거결과별 투표수 총합(분동 고려), 득표율 계산"""
+    """et means the code to look up for election_type"""
+
+    # test case
+    # 2308068 : 검단1동 (검단5동 결과랑 두 가지가 다 있음)
+
+    # 유효투표수
+    vote_sum = Area_Info.select().join(Election_Info).join(Candidate_Info).where(
+                            Election_Info.sig_cd == emd_cd,
+                            Election_Info.count_type == u'일반',
+                            Election_Info.elec_type == election_type[et]
+                        ).aggregate(fn.Sum(Election_Info.count).alias('sum'))
+
+    # 각 후보별 투표수
+    qry = Area_Info.select(
+                            Election_Info.elec_type, 
+                            Election_Info.precinct,
+                            Candidate_Info.name,
+                            Candidate_Info.party,
+                            Election_Info.count_type,
+                            Election_Info.count,
+                            fn.Sum(Election_Info.count).alias('vsum'),
+                        ).join(Election_Info).join(Candidate_Info).where(
+                            Election_Info.sig_cd == emd_cd,
+                            Election_Info.count_type == u'일반',
+                            Election_Info.elec_type == election_type[et]
+                        ).group_by(
+                            Election_Info.candidate_id
+                        #).order_by(
+                        #    Election_Info.elec_type,
+                        #    Candidate_Info.id
+                        ).naive()
+
+    header = {}
+    votes  = {}
+    rvotes = {}
+    for e in qry:
+        header[e.name] = election_type[et].encode('utf8') + "_" + e.party.encode('utf8')
+        #header[e.name] = e.party.encode('utf8')
+        votes[e.name]  = str(e.vsum)
+        rvotes[e.name] = "%.4f" % (float(e.vsum) / float(vote_sum))
+
+
+    return { 'header' : header,
+             'vote' : votes,
+             'ratio' : rvotes } 
+
+
 def get_candidates_from_emd(emd_cd):
     """모든 읍면동자료에서 모든 선거결과와 후보목록을 SQL로 뽑아낼 수 있다.
        다만 주의할 것은, 분동된 경우 두 번 나올 수 있다는 점. 그리고 이 때
@@ -80,7 +129,11 @@ def get_candidates_from_emd(emd_cd):
                             Election_Info.count,
                         ).join(Election_Info).join(Candidate_Info).where(
                             Election_Info.sig_cd == emd_cd,
-                            Election_Info.count_type == u'일반'
+                            Election_Info.count_type == u'일반',
+                            (Election_Info.elec_type == election_type[2])|
+                            (Election_Info.elec_type == election_type[3])|
+                            (Election_Info.elec_type == election_type[4])|
+                            (Election_Info.elec_type == election_type[7])
                         ).order_by(
                             Election_Info.elec_type,
                             Candidate_Info.id
@@ -93,6 +146,16 @@ def get_candidates_from_emd(emd_cd):
 
     return columns
 
+
+def is_list_same(list1, list2):
+    if len(list1) != len(list2):
+        return False
+
+    for i in range(len(list1)):
+        if list1[i] != list2[i]:
+            return False
+
+    return True
 
 #
 # 730 BIELECTION
@@ -139,6 +202,7 @@ area_data = {"2112002":["1120053","1120071","1120063","1120073","1120065","11200
 for area in area_data.keys():
     print election_area_data[area]
     print "=========================="
+    old_header = None
     for cd in area_data[area]:
         if len(cd) == 5:
             emd_cds = get_emd_cd_from_sgg_cd(cd)
@@ -148,10 +212,31 @@ for area in area_data.keys():
             print "ERROR: no code match : %s" % cd
             sys.exit(0)
 
+        row = []
         for emd_cd in emd_cds:
+            # print header
             emd_info = [x.encode('utf8') for x in get_area_full_info_from_emd(emd_cd)]
-            candidate_info = get_candidates_from_emd(emd_cd)
-            print "\t".join([emd_cd.encode('utf8'),] + emd_info + candidate_info)
-            raw_input()
+            vote_info1 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'시도지사']);
+            vote_info2 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'광역비례']);
+            vote_info3 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'기초단체장']);
+            vote_info4 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'기초비례']);
 
 
+            header = "\t".join([emd_cd.encode('utf8'),] + emd_info + 
+                                vote_info1['header'].values() + vote_info1['header'].values() +
+                                vote_info2['header'].values() + vote_info2['header'].values() +
+                                vote_info3['header'].values() + vote_info3['header'].values() +
+                                vote_info4['header'].values() + vote_info3['header'].values() 
+                            )
+            row = "\t".join([emd_cd.encode('utf8'),] + emd_info + 
+                                vote_info1['vote'].values() + vote_info1['ratio'].values() +
+                                vote_info2['vote'].values() + vote_info2['ratio'].values() +
+                                vote_info3['vote'].values() + vote_info3['ratio'].values() +
+                                vote_info4['vote'].values() + vote_info4['ratio'].values() 
+                            )
+
+            if old_header is None or not is_list_same(old_header.split('\t')[4:], header.split('\t')[4:]):
+                old_header = header
+                print header
+
+            print row 

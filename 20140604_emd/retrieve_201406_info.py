@@ -202,41 +202,45 @@ area_data = {"2112002":["1120053","1120071","1120063","1120073","1120065","11200
 for area in area_data.keys():
     print election_area_data[area]
     print "=========================="
-    old_header = None
-    for cd in area_data[area]:
-        if len(cd) == 5:
-            emd_cds = get_emd_cd_from_sgg_cd(cd)
-        elif len(cd) == 7:
-            emd_cds = [cd]
-        else:
-            print "ERROR: no code match : %s" % cd
-            sys.exit(0)
-
-        row = []
-        for emd_cd in emd_cds:
-            # print header
-            emd_info = [x.encode('utf8') for x in get_area_full_info_from_emd(emd_cd)]
-            vote_info1 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'시도지사']);
-            vote_info2 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'광역비례']);
-            vote_info3 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'기초단체장']);
-            vote_info4 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'기초비례']);
-
-
-            header = "\t".join([emd_cd.encode('utf8'),] + emd_info + 
-                                vote_info1['header'].values() + vote_info1['header'].values() +
-                                vote_info2['header'].values() + vote_info2['header'].values() +
-                                vote_info3['header'].values() + vote_info3['header'].values() +
-                                vote_info4['header'].values() + vote_info3['header'].values() 
-                            )
-            row = "\t".join([emd_cd.encode('utf8'),] + emd_info + 
-                                vote_info1['vote'].values() + vote_info1['ratio'].values() +
-                                vote_info2['vote'].values() + vote_info2['ratio'].values() +
-                                vote_info3['vote'].values() + vote_info3['ratio'].values() +
-                                vote_info4['vote'].values() + vote_info4['ratio'].values() 
-                            )
-
-            if old_header is None or not is_list_same(old_header.split('\t')[4:], header.split('\t')[4:]):
-                old_header = header
-                print header
-
-            print row 
+    with open(election_area_data[area] + ".tsv", "w") as f:
+        old_header = None
+        for cd in area_data[area]:
+            if len(cd) == 5:
+                emd_cds = get_emd_cd_from_sgg_cd(cd)
+            elif len(cd) == 7:
+                emd_cds = [cd]
+            else:
+                print "ERROR: no code match : %s" % cd
+                sys.exit(0)
+    
+            row = []
+            for emd_cd in emd_cds:
+                # print header
+                emd_info = [x.encode('utf8') for x in get_area_full_info_from_emd(emd_cd)]
+                vote_info1 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'시도지사']);
+                vote_info2 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'광역비례']);
+                vote_info3 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'기초단체장']);
+                vote_info4 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'기초비례']);
+    
+    
+                header = "\t".join([emd_cd.encode('utf8'),] + emd_info + 
+                                    vote_info1['header'].values() + vote_info1['header'].values() +
+                                    vote_info2['header'].values() + vote_info2['header'].values() +
+                                    vote_info3['header'].values() + vote_info3['header'].values() +
+                                    vote_info4['header'].values() + vote_info3['header'].values() 
+                                )
+                row = "\t".join([emd_cd.encode('utf8'),] + emd_info + 
+                                    vote_info1['vote'].values() + vote_info1['ratio'].values() +
+                                    vote_info2['vote'].values() + vote_info2['ratio'].values() +
+                                    vote_info3['vote'].values() + vote_info3['ratio'].values() +
+                                    vote_info4['vote'].values() + vote_info4['ratio'].values() 
+                                )
+    
+                if old_header is None or not is_list_same(old_header.split('\t')[4:], header.split('\t')[4:]):
+                    old_header = header
+                    f.write(header + '\n')
+                    #print header
+    
+                f.write(row + '\n')
+                #print row 
+    f.close()

@@ -67,3 +67,5 @@ update candidate_info set elec_type='기초단체장' where elec_type like '구�
 update candidate_info set elec_type='광역의회의원' where elec_type like '시의원';
 update candidate_info set elec_type='시도지사' where elec_type like '시장';
 update candidate_info set elec_type='기초의회의원' where elec_type like '구시군의원';
+update candidate_info set party='통합진보당' where party='통합';
+update candidate_info set party='새정치당' where party='새정치';

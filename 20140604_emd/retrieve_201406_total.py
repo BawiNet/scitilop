@@ -205,10 +205,10 @@ def rev_lookup(party_name, sel):
     return -1
 
 book = Workbook()
-sheet = book.add_sheet(u"시도지사")
+sheet = book.add_sheet(u"광역비례")
 row_count = 0
-for i in range(len(position_2)):
-    sheet.write(row_count, i, position_2[i])
+for i in range(len(position_3)):
+    sheet.write(row_count, i, position_3[i])
 
 for prv in Area_Info.select(Area_Info.sig_cd, Area_Info.sig_nm).where(Area_Info.sig_lvl == 1):
     print "%s (%s)" % (prv.sig_nm, prv.sig_cd)
@@ -222,7 +222,7 @@ for prv in Area_Info.select(Area_Info.sig_cd, Area_Info.sig_nm).where(Area_Info.
             row_count = row_count + 1
 
             emd_info = get_area_full_info_from_emd(emd_cd)
-            vote_info1 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'시도지사']);
+            vote_info1 = get_standard_info_from_emd(emd_cd, election_type_reverse[u'광역비례']);
 
             colnum = 0
             for i in [emd_cd,] + emd_info:
@@ -230,8 +230,8 @@ for prv in Area_Info.select(Area_Info.sig_cd, Area_Info.sig_nm).where(Area_Info.
                 colnum = colnum + 1
             
             for i in vote_info1['ratio'].keys(): # keys are party names
-                sheet.write(row_count, rev_lookup(i,2), vote_info1['ratio'][i])
+                sheet.write(row_count, rev_lookup(i,election_type_reverse[u'광역비례']), vote_info1['ratio'][i])
             
         sheet.flush_row_data()
-        book.save('20140730_시도지사.xls')
+        book.save('20140730_광역비례.xls')
 

@@ -11,12 +11,12 @@ for line in f_code:
     area_code[ tokens[2].encode('utf-8') ] = int(tokens[0])
 f_code.close()    
 
-tag_fileinfo = u'[국회의원선거]'
+tag_fileinfo = u'[비례대표국회의원선거]'
 tag_candidate = u"투표수"
-tag_remote_abroad = u'국외부재자투표'
+tag_remote_abroad = u'재외투표'
 tag_remote_domestic = u'국내부재자투표'
 tag_wrong_ballot = u'잘못투입된투표지'
-tag_sum = u'계'
+tag_sum = u'합계'
 
 def parse_xlstxt(filename):
     idx = 0
@@ -32,6 +32,7 @@ def parse_xlstxt(filename):
     f = codecs.open(filename,'r','utf-8')
     for line in f:
         tokens = line.strip().replace(',','').split("\t")
+        #print tokens[0],len(tokens)
         #print type(tokens[0].encode('utf-8'))
         #print repr(tokens[0].encode('utf-8'))
         #print repr(tag_loc1)
@@ -68,9 +69,15 @@ def parse_xlstxt(filename):
             tmp_loc = 2
             continue
         
-        if( tokens[0] == '' or tokens[0].startswith(tag_sum) ):
+        if( tokens[0] == '' ):
             tmp_loc = 0
             continue
+
+        if( tokens[0].startswith(tag_sum) ):
+            del candidates[-1]
+            tmp_loc = 0
+            continue
+
         if( tokens[0].startswith(tag_wrong_ballot) ):
             tmp_loc = 0
             continue
@@ -78,12 +85,16 @@ def parse_xlstxt(filename):
         if( tmp_loc == 0 ):
             continue
         elif( tmp_loc == 1 ):
-            candidates += tokens
+            if( len(candidates) == 0 ):
+                candidates += tokens
+            else:
+                candidates[-1] = candidates[-1]+tokens[0]
+                candidates += tokens[1:]
         elif( tmp_loc == 2 ):
-            if( len(tokens) == 17 ):
+            if( len(tokens) == 27 ):
                 town_name = tokens[0]
                 continue
-            elif( len(tokens) == 16 ):
+            elif( len(tokens) == 26 ):
                 district_name = tokens[0]
                 votes_district[district_name] = {'voter':int(tokens[1]), \
                                 'ballot':int(tokens[2]),\
@@ -100,14 +111,14 @@ def parse_xlstxt(filename):
 f_out = dict()
 f_extra = dict()
 
-dirname_txt = u'legislative2012.xls'
+dirname_txt = u'legislative2012_party.xls'
 for filename in os.listdir(dirname_txt):
     if( not filename.endswith('.xls.txt') ):
         continue
 
     province_name = filename.split('_')[1].encode('utf-8')
-    filename_main = 'legislative2012.%s.main.txt'%area_code[province_name]
-    filename_extra = 'legislative2012.%s.extra.txt'%area_code[province_name]
+    filename_main = 'legislative2012.%s.party_main.txt'%area_code[province_name]
+    filename_extra = 'legislative2012.%s.party_extra.txt'%area_code[province_name]
     if( not f_out.has_key(province_name) ):
         f_out[province_name] = codecs.open(filename_main,'w','utf-8')
         f_out[province_name].write('#%s\t%s\t%s\t%s\t%s\t%s\t%s\n'%(u'특별시/광역시/도',u'시군구',u'읍면동',u'선거구',u'후보정당',u'후보',u'득표수'))
@@ -137,9 +148,9 @@ for filename in os.listdir(dirname_txt):
         f_extra[province_name].write('%s\t%s\t%s\t%s\t%s\t%d\n'%(rv1['province'],rv1['city'],rv1['town'],district_name,u'무효',rv1['invalid']))
         f_extra[province_name].write('%s\t%s\t%s\t%s\t%s\t%d\n'%(rv1['province'],rv1['city'],rv1['town'],district_name,u'기권',rv1['abstention']))
 
-        candidate_list = []
-        for i in range(0,len(rv1['candidates']),2):
-            candidate_list.append( '%s\t%s'%(rv1['candidates'][i],rv1['candidates'][i+1]) )
+        candidate_list = rv1['candidates']
+        #for i in range(0,len(rv1['candidates']),2):
+        #    candidate_list.append( '%s\t%s'%(rv1['candidates'][i],rv1['candidates'][i+1]) )
         
         idx = 0
         for tmp_candidate in candidate_list:
@@ -151,6 +162,6 @@ for filename in os.listdir(dirname_txt):
         f_out[province_name].write('%s\t%s\t%s\t%s\t%s\t%s\n'%(rv2['province'],rv2['city'],rv2['town'],u'국외부재자',tmp_candidate,rv2['vote_list'][idx]))
         f_out[province_name].write('%s\t%s\t%s\t%s\t%s\t%s\n'%(rv3['province'],rv3['city'],rv3['town'],u'국내부재자',tmp_candidate,rv3['vote_list'][idx]))
         idx += 1
-    
+
 for tmp_f in f_out.values():
     tmp_f.close()

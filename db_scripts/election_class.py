@@ -39,10 +39,12 @@ class area_info( data_model ):
 	sig_lvl = CharField()
 	sig_cd = CharField()
 	sig_nm = CharField()
-	geoJSON = TextField()
+	geoJSON = TextField( null = True )
+	valid_from = DateField( null = True )
+	valid_to = DateField( null = True )
 	prev_area = ForeignKeyField( 'self', related_name = 'next', null = True )
 	next_area = ForeignKeyField( 'self', related_name = 'prev',  null = True )
-	parent = ForeignKeyField( 'self', related_name = 'children', null = True )
+	parent_area = ForeignKeyField( 'self', related_name = 'children', null = True )
 	
 
 class election_info( data_model  ):
@@ -57,11 +59,11 @@ class elec_area_info( data_model  ):
 	elec_cd = CharField()
 	elec_nm = CharField()
 	geoJSON = TextField( null = True )
-	valid_from = DateField()
-	valid_to = DateField()
+	valid_from = DateField( null = True )
+	valid_to = DateField( null = True )
 	prev_elec = ForeignKeyField( 'self', related_name = 'next', null = True )
 	next_elec = ForeignKeyField( 'self', related_name = 'prev', null = True )
-	parent_id = ForeignKeyField( 'self', related_name = 'children', null = True )
+	parent_elec = ForeignKeyField( 'self', related_name = 'children', null = True )
 
 class elec_area_relation( data_model  ):
 	id = PrimaryKeyField()
@@ -107,6 +109,7 @@ class counting_info( data_model ):
 	counting_percent = FloatField()
 	vote_count = IntegerField()
 	invalid_count = IntegerField()
+	abstention_count = IntegerField()
 
 class election_result( data_model ):
 	id = PrimaryKeyField()

@@ -55,10 +55,11 @@ if key in basedata_config.keys():
 	if info_type == 'file':
 		filename = basedata_config[key]['location']
 		json_file = open( filename, 'r' )
-		elec_area_hash = json.load( json_file )
+		elec_area_list = json.load( json_file )
 		json_file.close()
-		for elec_cd in elec_area_hash.keys():
-			elec_data = elec_area_hash[elec_cd]
+		for elec_data in elec_area_list:
+			elec_cd, elec_lvl, elec_nm, parent_cd = elec_data
+			#elec_data = elec_area_hash[elec_cd]
 			try:
 				ea = elec_area_info.get( elec_area_info.elec_cd == elec_cd )
 				
@@ -66,9 +67,16 @@ if key in basedata_config.keys():
 				print "new elec_area data", elec_cd, elec_data
 				ea = elec_area_info()
 				ea.elec_cd = elec_cd
-				ea.elec_lvl, ea.elec_nm = elec_data
-				ea.valid_from = "2014-01-01"
+				ea.elec_lvl = elec_lvl
+				ea.elec_nm = elec_nm
+				ea.valid_from = "2012-01-01"
 				ea.valid_to = "9999-12-31"
+				if parent_cd != "":
+					try:
+						p_ea = elec_area_info.get( elec_area_info.elec_cd == parent_cd )
+					except:
+						print "no such parent data"
+					ea.parent_elec = p_ea.id
 				ea.save()
 				continue
 			else:
@@ -85,7 +93,7 @@ if 'area_info' in basedata_config.keys():
 		for dirname, dirnames, filenames in os.walk( location ):
 			for filename in filenames:
 				elems = filename.split( "." )
-				sig_lvl = elems[3]
+				sig_lvl = int( elems[3] )
 				lvl1_cd = elems[2]
 				fullpath = os.path.join(dirname, filename)	
 				print fullpath
@@ -101,7 +109,7 @@ if 'area_info' in basedata_config.keys():
 						area = area_info.get( area_info.sig_cd == data['properties']['Name'] )
 						print "already exist", data['properties']['Name'], data['properties']['Description']
 					except area_info.DoesNotExist:
-						print "new data", data['properties']['Name'], data['properties']['Description']
+						print "new data", data['properties']['Name'], data['properties']['Description'], sig_lvl
 						area = area_info()
 						area.sig_cd = data['properties']['Name']
 						area.sig_nm = data['properties']['Description']
@@ -110,25 +118,28 @@ if 'area_info' in basedata_config.keys():
 						area.valid_to = "9999-12-31"
 						area.coord_sys = "WGS84"
 						area.sig_lvl = sig_lvl
-						if sig_lvl == '2':
+						if sig_lvl == 2:
+							#print sig_lvl
 							try:
 								parent = area_info.get( area_info.sig_cd == area.sig_cd[0:2] )
-								area.parent_id = parent.id
+								area.parent_area = parent.id
 							except area_info.DoesNotExist:
 								print "no parent area"
-						elif sig_lvl == '3':
+						elif sig_lvl == 3:
+						#	print sig_lvl
 							try:
 								parent = area_info.get( area_info.sig_cd == area.sig_cd[0:5] )
-								area.parent_id = parent.id
+								area.parent_area = parent.id
 							except area_info.DoesNotExist:
 								print "no parent area"
 						area.save()
 
 
-''' 선거-선거구 매핑 정보 입력 ''' 
+''' 선거-선거구 매핑 정보 입력: deprecated '''  
 
 key = 'elec_elec_area_relation'
-if key in basedata_config.keys():
+if False:
+#if key in basedata_config.keys():
 	print "loading", key
 	info_type = basedata_config[key]['type']
 	if info_type == 'file':
@@ -161,7 +172,7 @@ if key in basedata_config.keys():
 							print "already exist", elec_date, elec_cd, eearel.id
 
 
-''' 선거구-행정구역 매핑 정보 입력 ''' 
+''' 선거-선거구, 선거구-행정구역 매핑 정보 입력 ''' 
 
 key = 'elec_area_relation'
 if key in basedata_config.keys():
@@ -170,31 +181,64 @@ if key in basedata_config.keys():
 	if info_type == 'file':
 		filename = basedata_config[key]['location']
 		json_file = open( filename, 'r' )
-		ea_relation_hash = json.load( json_file )
+		ea_master_relation_hash = json.load( json_file )
 		json_file.close()
-		for elec_cd in ea_relation_hash.keys():
-			sig_cd_list = ea_relation_hash[elec_cd]
+		
+		for elec_date in ea_master_relation_hash.keys():
+			''' 선거일 '''
+			found_election = False
 			try:
-				ea = elec_area_info.get( elec_area_info.elec_cd == elec_cd )
-			except elec_area_info.DoesNotExist:
-				print "no such elec area", elec_cd
+				e = election_info.get( election_info.elec_date == elec_date )
+			except election_info.DoesNotExist:
+				print "no such election", elec_date
 			else:
-				for sig_cd in sig_cd_list:
+				found_election = True
+			elec_area_mapping_hash = ea_master_relation_hash[elec_date]
+		
+			for elec_cd in elec_area_mapping_hash .keys():
+			
+				try:
+					ea = elec_area_info.get( elec_area_info.elec_cd == elec_cd )
+				except elec_area_info.DoesNotExist:
+					print "no such elec_area", elec_cd
+					continue
+				if( ea.elec_nm != elec_area_mapping_hash[elec_cd]['elec_nm'] ):
+					print "elec_nm not matching", ea.elec_nm, elec_area_mapping_hash['elec_nm']
+					continue
+			
+				if found_election:
 					try:
-						area = area_info.get( area_info.sig_cd == sig_cd )
+						eearel = elec_elec_area_relation.get( ( elec_elec_area_relation.election_info == e.id ) & ( elec_elec_area_relation.elec_area_info == ea.id ) )
+					except elec_elec_area_relation.DoesNotExist:
+						print "adding", e.elec_title, ea.elec_nm
+						eearel = elec_elec_area_relation()
+						eearel.election_info = e.id
+						eearel.elec_area_info = ea.id
+						eearel.save()
+					else:
+						print "already exist", e.elec_title, ea.elec_nm
+			
+			
+				area_hash = elec_area_mapping_hash[elec_cd]['area_hash']
+				for sig_cd in area_hash.keys():
+					try:
+						a = area_info.get( area_info.sig_cd == sig_cd )
 					except area_info.DoesNotExist:
 						print "no such area", sig_cd
-					else:	
-						try:
-							earel = elec_area_relation.get( ( elec_area_relation.elec_area_info == ea.id ) & ( elec_area_relation.area_info == area.id ) )
-						except elec_area_relation.DoesNotExist:
-							print "adding elec_area_relation", elec_cd, sig_cd
-							earel = elec_area_relation()
-							earel.elec_area_info = ea.id
-							earel.area_info = area.id
-							earel.save()
-						else:
-							print "already exist", elec_cd, sig_cd, earel.id
+						continue
+					if a.sig_nm != area_hash[sig_cd]:
+						print "sig_nm not matching", a.sig_nm, area_hash[sig_cd]
+						continue
+					try:
+						earel = elec_area_relation.get( ( elec_area_relation.area_info == a.id ) & ( elec_area_relation.elec_area_info == ea.id ) )
+					except elec_area_relation.DoesNotExist:
+						print "adding", ea.elec_nm, a.sig_nm
+						earel = elec_area_relation()
+						earel.elec_area_info = ea.id
+						earel.area_info = a.id
+						earel.save()			
+					else:
+						print "already there", ea.elec_nm, a.sig_nm
 
 ''' 정당정보 입력 '''
 key = 'party_info'
@@ -230,7 +274,7 @@ if key in basedata_config.keys():
 					print "already exist", party_nm, valid_from
 
 
-''' 730 재보선 후보자 정보 입력 '''
+''' 각 선거 후보자 정보 입력 '''
 key = 'candidate_info'
 if key in basedata_config.keys():
 	print "loading", key
@@ -249,13 +293,16 @@ if key in basedata_config.keys():
 						
 			elec_area_candidate_hash = candidate_data_hash[elec_date]
 			for elec_area_cd in elec_area_candidate_hash.keys():
+				
 				try:
 					elec_area = elec_area_info.get( elec_area_info.elec_cd == elec_area_cd )
 				except elec_area_info.DoesNotExist:
 					print "no such elec_area", elec_area_cd
 					continue
-					
+				else:
+					print elec_area.elec_nm, elec_area.elec_cd	
 				candidate_list = elec_area_candidate_hash[elec_area_cd]
+				
 				for candidate_data in candidate_list:
 					party_nm, cand_num, name, hanja, sex, birthdate = candidate_data
 					
@@ -307,10 +354,10 @@ if key in basedata_config.keys():
 		filename = basedata_config[key]['location']
 		print filename
 		json_file = open( filename, 'r' )
-		#json_data = json_file.read()
+		json_data = json_file.read()
 		#print json_data
-		#result_data_hash = json.loads( json_data )
-		result_data_hash = json.load( json_file)
+		result_data_hash = json.loads( json_data )
+		#result_data_hash = json.load( json_file)
 		json_file.close()
 
 
@@ -349,7 +396,10 @@ if key in basedata_config.keys():
 					counting.save()
 					print counting.election_info.elec_title, counting.elec_area_info.elec_nm, counting.counting_percent
 		
+				max_vote = 0
+				max_vote_result_id = -1
 				vote_result_list = result_data_hash[elec_date][elec_area_cd]['candidate_result']
+		
 				for vote_result in vote_result_list:
 					candidate_num, party_nm, candidate_nm, sex, vote_count, vote_percent = vote_result
 					print "  ",party_nm, candidate_nm
@@ -391,6 +441,7 @@ if key in basedata_config.keys():
 						candidate.person_info = person.id
 						candidate.candidate_num = candidate_num
 						candidate.save()
+						
 					else:
 						
 						print "already_exist:", candidate.election_info.elec_title, candidate.elec_area_info.elec_nm, candidate.party_info.party_nm, candidate.person_info.id, candidate.person_info.name
@@ -405,3 +456,12 @@ if key in basedata_config.keys():
 						eresult.vote_count = vote_count
 						eresult.vote_percent = vote_percent
 						eresult.save()
+
+						if max_vote < vote_count:
+							max_vote = vote_count
+							max_vote_result_id = eresult.id
+				
+				if max_vote_result_id > 0:
+					eresult = election_result.get( election_result.id == max_vote_result_id )
+					eresult.elected = True
+					eresult.save()

@@ -1,0 +1,794 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>중앙선거관리위원회 선거통계시스템|투/개표정보|개표진행상황</title>
+<script type="text/javascript" charset="utf-8" src="/common/js/common.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/common/js/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="/common/js/menu.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/common/js/headMenu.js"></script>
+<script type="text/javascript">
+function MM_popupMsg(msg) { //v1.0
+  alert(msg);
+}
+</script>
+<link rel="stylesheet" type="text/css" href="/common/css/base.css" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<meta name="keywords" content="투/개표정보, 개표진행상황"/>
+<meta name="description" content="2012년 제19대 국회의원선거, 2012년 4월 11일"/>
+<meta name="author" content="선거정보조회시스템"/>
+
+<style type="text/css" media="all" title="default">@import "/common/css/base.css";</style>
+	<script type="text/javascript" charset="utf-8" src="/common/js/jquery/jquery.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/common/js/jquery/jquery.blockUI.js" ></script>
+<script type="text/javascript" charset="utf-8" src="/common/js/jquery.nextree_extension.js"></script>
+<script type="text/javascript" charset="utf-8" src="/common/js/electioncommon.js"></script>
+<script type="text/javascript" charset="utf-8" src="/common/js/ubiviewer.js"></script>
+<script type="text/javascript">
+	
+	var previousElectionCode = '2';
+	
+	//var allOption = '<option value="0">▷ 전체</option>';
+	var previousCityCode = -1;
+
+	
+	var previousSggCityCode = -1;
+
+	$(document).ready(function(){
+		settingYN();
+
+		
+		//checkPreviousCityCodeForSgCode('0020120411', '2', '2700');
+		
+
+
+		$('#searchForm').submit(chooseStatementId);
+		$('#electionCode').change(changeElectionCode);
+		//$('#cityCode').change(settingYN);
+		$('#cityCode').change(changeCityCode);
+		$('#sggCityCode').change(settingYN);
+
+		setSubTitle();
+		makeXlsDownloadLink();
+		//expandTableSize();
+	});
+
+	function makeXlsDownloadLink(){
+		var downloadLink = $('#link_downloadXls');
+		if(downloadLink.size() > 0){
+			chooseStatementId();
+
+			var queryString = 'electionId='+$('#electionId').val();
+			queryString += '&statementId='+encodeURIComponent($('#statementId').val());
+			queryString += '&requestURI='+encodeURIComponent($('#requestURI').val());
+
+			queryString += '&electionCode='+$('#electionCode').val();
+			queryString += '&cityCode='+$('#cityCode').val();
+
+			queryString += '&electionName=' + encodeURIComponent(retrieveSelectedName('electionCode'));
+			queryString += '&cityName=' + encodeURIComponent(retrieveSelectedName('cityCode'));
+			queryString += '&xlsFileName=' + encodeURIComponent('개표진행상황');
+
+			var url = downloadLink.attr('href');
+			downloadLink.attr('href', url+'?'+queryString);
+		}
+	}
+
+	function retrieveSelectedName(id){
+		var selectedOption = $('#'+id+' option:selected');
+		if(selectedOption.val() > 0) return '['+selectedOption.html()+']';
+		return '';
+	}
+
+	function setSubTitle() {
+
+		var cityCode =$('#cityCode').val();
+
+		if ($('#electionCode').val() > 0) {
+			$('#electionName').html(retrieveSelectedName('electionCode'));
+		}
+
+		if ($('#cityCode').val() > 0) {
+			$('#cityName').html(retrieveSelectedName('cityCode'));
+		}
+	}
+
+	function changeElectionCode(e){
+		
+		checkPreviousCityCodeForSgCode($('#electionId').val(), $('#electionCode').val(), '-1');
+		
+
+		$('#cityCode').val(-1);
+		$('#sggCityCode').val(-1); 
+		settingYN();
+	}
+
+	
+	function changeCityCode(e){
+		$('#sggCityCode').val(-1);
+		previousCityCode = -1;
+		previousSggCityCode = -1;
+		changeSelectBox();
+	}
+
+	
+	function changeSelectBox(){
+		var electionId = $('#electionId').val();
+		var electionCode = $('#electionCode').val();
+		var cityCode = $('#cityCode').val();
+		var sggCityCode = $('#sggCityCode').val();
+
+		if (electionCode == 2) {
+			if(cityCode > 0){
+				
+				checkPreviousCityCodeForSggCityCode(electionId, electionCode, cityCode);
+			}
+		}
+		
+		settingYN();
+	}
+
+	function settingYN(e){
+		var electionCode = $('#electionCode').val();
+		var cityCode = $('#cityCode').val();
+		var sggCityCode = $('#sggCityCode').val();
+
+		
+		if(electionCode == 2 || electionCode == 3 || electionCode == 11){
+			removeAllOption('cityCode');
+		}else{
+			appendAllOption('cityCode');
+		}
+		
+		if(electionCode == 3 || electionCode == 4 || electionCode == 5 || electionCode == 6 || electionCode == 7 || electionCode == 11){
+			
+			if(cityCode == -1){
+				selectBoxShow("", "none", "none");
+			}
+			else{
+				selectBoxShow("", "none", "");
+			}
+		}
+		else if(electionCode == 2){
+			if(cityCode == -1){
+				selectBoxShow("", "none", "none");
+			}
+			else{
+				if(sggCityCode == -1){
+					selectBoxShow("", "", "none");
+				}
+				else{
+					selectBoxShow("", "", "");
+				}
+			}
+		}
+		else{
+			selectBoxShow("none", "none", "none");
+		}
+		if(electionCode >= 0){
+			$('#wub_select').css('display','');
+		}
+	}
+
+	function selectBoxShow(citySpanStyle, sggCitySpanStyle, submitSpanStyle){
+		$('#spanCityCode').css('display', citySpanStyle);
+		$('#spanSggCityCode').css('display', sggCitySpanStyle);
+		$('#spanSubmit').css('display', submitSpanStyle);
+	}
+
+	function chooseStatementId() {
+		var statementId = "";
+		var electionCode = $('#electionCode').val();
+
+		switch (electionCode) {
+			case "0": statementId = "VCCP09_#0"; break;
+			case "2": statementId = "VCCP09_#2"; break;
+			case "3": statementId = "VCCP09_#3"; break;
+			case "4": statementId = "VCCP09_#4"; break;
+			case "5": statementId = "VCCP09_#5"; break;
+			case "6": statementId = "VCCP09_#6"; break;
+			case "7": statementId = "VCCP09_#7"; break;
+			case "11": statementId = "VCCP09_#11"; break;
+			default: break;
+		}
+		$('#statementId').val(statementId);
+	}
+
+	function setElectionCode(code){
+		$('#wub_select').css('display', '');
+		
+		if(2 == code){
+			$('#electionId'+2).addClass('on');
+		}else{
+			$('#electionId'+2).removeClass('on');
+		}
+		
+		if(3 == code){
+			$('#electionId'+3).addClass('on');
+		}else{
+			$('#electionId'+3).removeClass('on');
+		}
+		
+		if(4 == code){
+			$('#electionId'+4).addClass('on');
+		}else{
+			$('#electionId'+4).removeClass('on');
+		}
+		
+		if(5 == code){
+			$('#electionId'+5).addClass('on');
+		}else{
+			$('#electionId'+5).removeClass('on');
+		}
+		
+		if(6 == code){
+			$('#electionId'+6).addClass('on');
+		}else{
+			$('#electionId'+6).removeClass('on');
+		}
+		
+		if(7 == code){
+			$('#electionId'+7).addClass('on');
+		}else{
+			$('#electionId'+7).removeClass('on');
+		}
+		
+		if(11 == code){
+			$('#electionId'+11).addClass('on');
+		}else{
+			$('#electionId'+11).removeClass('on');
+		}
+		
+		$('#electionCode').val(code);
+		
+		checkPreviousCityCodeForSgCode($('#electionId').val(), $('#electionCode').val());
+		
+		
+		$('#spanSggCityCode').css('display', 'none');
+
+		$('#cityCode').val(-1);
+		$('#sggCityCode').val(0);
+		settingYN();
+	}
+
+	</script></head>
+<body class="zoom1">
+<div
+	
+		id="wrapper" class="depth1Bg_03" 
+		
+    >
+
+<div id="wrap">
+	<div class="accessibility-nav"><a href="#container">콘텐츠 바로가기</a> </div>
+	<hr />
+	<div id="header">
+		<h1><a href="/"><img alt="중앙선거관리위원회-선거통계시스템" src="/common/images/common/logo.gif"></a></h1>
+		<ul id="topMenu">
+			<!--<li><a href="/board/popupnotice_readList.xhtml" title="알림마당">알림마당</a></li>
+			--><li class="end">글씨크기&nbsp;&nbsp;<a href="javascript:Handicap_ZoomIn();"><img alt="글씨크기 확대" src="/common/images/common/topmenu_zoom_in.gif"/></a>&nbsp;<a href="javascript:clear();"><img alt="글씨크기 초기화" src="/common/images/common/default_btn.gif"/></a>&nbsp;<a href="javascript:Handicap_ZoomOut();"><img alt="글씨크기 축소" src="/common/images/common/topmenu_zoom_out.gif"/></a></li>
+		</ul>
+		<ul class="sub_top"> 			
+			<li><a href="/main/showDocument.xhtml?electionId=0000000000&topMenuId=BI"><img alt="역대선거정보" src="/common/images/common/sub_top_m2.gif"></a></li>
+			<li><a href="/"><img alt="홈으로" src="/common/images/common/sub_top_m1.gif"></a></li>
+		</ul>
+	</div>
+	<hr />
+	<div id="container">
+		<div id="sub_title"><h2><span>제19대 국회의원선거 : 2012년 04월11일 실시</span></h2></div>
+					<ul id="sub_gnb">	
+		<li align=left><a id="BI" href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=BI" title="기본현황" ><span>기본현황</span></a>
+				<ul style="_width:126%" class="off"><li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=BI&amp;secondMenuId=BIES01" title="선거일정"
+						class="">
+					선거일정</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=BI&amp;secondMenuId=BIGI" title="일반현황"
+						class="">
+					일반현황</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=BI&amp;secondMenuId=BIPB" title="선거인명부"
+						class="">
+					선거인명부</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=BI&amp;secondMenuId=BIPP" title="투표소현황"
+						class="">
+					투표소현황</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=BI&amp;secondMenuId=BICP" title="개표소현황"
+						class="">
+					개표소현황</a>
+						</li>
+					</ul>
+				</li>		
+			<li align=left><a id="CP" href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=CP" title="후보자" ><span>후보자</span></a>
+				<ul style="_width:126%" class="off"><li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=CP&amp;secondMenuId=CPRI03" title="후보자 명부"
+						class="">
+					후보자 명부</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=CP&amp;secondMenuId=CPRI01" title="후보자 등록수"
+						class="">
+					후보자 등록수</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=CP&amp;secondMenuId=CPRI05" title="사퇴/사망/등록무효"
+						class="">
+					사퇴/사망/등록무효</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=CP&amp;secondMenuId=CPRI06" title="후보자 각종통계"
+						class="">
+					후보자 각종통계</a>
+						</li>
+					</ul>
+				</li>		
+			<li align=left><a id="VC" href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=VC" title="투·개표" class="on"><span>투·개표</span></a>
+				<ul style="_width:126%" ><li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=VC&amp;secondMenuId=VCVP" title="투표진행"
+						class="">
+					투표진행</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=VC&amp;secondMenuId=VCCP" title="개표진행"
+						class="on">
+					개표진행</a>
+						</li>
+					</ul>
+				</li>		
+			<li align=left><a id="EP" href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=EP" title="당선인" ><span>당선인</span></a>
+				<ul style="_width:126%" class="off"><li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=EP&amp;secondMenuId=EPEI01" title="당선인 명부"
+						class="">
+					당선인 명부</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=EP&amp;secondMenuId=EPEI02" title="무투표당선인 명부"
+						class="">
+					무투표당선인 명부</a>
+						</li>
+					<li><a href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=EP&amp;secondMenuId=EPEI03" title="당선인 각종통계"
+						class="">
+					당선인 각종통계</a>
+						</li>
+					</ul>
+				</li>		
+			</ul>	
+		<div class="sub_2gnb"></div>	
+		<div id="tab_lay">
+   		<div class="tab line">    
+  			 	 <ul><li class="active">
+							<a title="개표진행상황"
+													
+														href="/main/showDocument.xhtml?electionId=0020120411&amp;topMenuId=VC&amp;secondMenuId=VCCP&amp;menuId=VCCP09"
+													class="active"
+									><span><img alt="" src="/common/images/common/tab_ico.gif" />개표진행상황</span></a></li>
+								</li>
+					</ul></div>
+            </div>
+		<div id="cont">	
+     		<!--
+<META HTTP-EQUIV=Refresh CONTENT="30; URL=/electioninfo/electionInfo_report.xhtml?electionId=0020110427&requestURI=%2Felectioninfo%2F0020110427%2Fvc%2Fvccp09.jsp&topMenuId=&secondMenuId=&menuId=VCCP09&requestor=inner&statementId=VCCP09&electionCode=2&cityCode=2700&x=22&y=11">
+-->
+
+
+<select id="checkCityCode" name="checkCityCode" style="display:none;">
+	<option value="-1">▽ 선 택</option>
+	<option value="1100">서울특별시</option>
+	<option value="2600">부산광역시</option>
+	<option value="2700">대구광역시</option>
+	<option value="2800">인천광역시</option>
+	<option value="2900">광주광역시</option>
+	<option value="3000">대전광역시</option>
+	<option value="3100">울산광역시</option>
+	<option value="5100">세종특별자치시</option>
+	<option value="4100">경기도</option>
+	<option value="4200">강원도</option>
+	<option value="4300">충청북도</option>
+	<option value="4400">충청남도</option>
+	<option value="4500">전라북도</option>
+	<option value="4600">전라남도</option>
+	<option value="4700">경상북도</option>
+	<option value="4800">경상남도</option>
+	<option value="4900">제주특별자치도</option>
+	</select>
+<!-- Contents START -->
+
+	<div id="sub_3gnb">
+	<div class="sub_gnb_11">
+ 		<form id="searchForm" action="/electioninfo/electionInfo_report.xhtml" method="get">
+			<input type="hidden" id="electionId" name="electionId" value="0020120411" />
+<input type="hidden" id="requestURI" name="requestURI" value="/electioninfo/0020120411/vc/vccp09.jsp" />
+<input type="hidden" id="topMenuId" name="topMenuId" value='VC' />
+<input type="hidden" id="secondMenuId" name="secondMenuId" value='VCCP' />
+<input type="hidden" id="menuId" name="menuId" value='VCCP09' />
+<input type="hidden" id="statementId" name="statementId" value="VCCP09_#2" />
+
+			<p>선거</p>
+			<ul>
+				<li><a id="electionId2" href="javascript:setElectionCode(2);" class="on">국회의원선거</a></li>
+				<li><a id="electionId3" href="javascript:setElectionCode(3);" >시·도지사선거</a></li>
+				<li><a id="electionId4" href="javascript:setElectionCode(4);" >구·시·군의장선거</a></li>
+				<li><a id="electionId5" href="javascript:setElectionCode(5);" >시·도의회의원선거</a></li>
+				<li><a id="electionId6" href="javascript:setElectionCode(6);" >구·시·군의회의원선거</a></li>
+				<li><a id="electionId7" href="javascript:setElectionCode(7);" >비례대표국회의원선거</a></li>
+				<li><a id="electionId11" href="javascript:setElectionCode(11);" >교육감선거</a></li>
+				</ul>
+            </div>
+			<span id="wub_select" style="display:none;" >
+            <div class="wub_select1">
+			<select id="electionCode" name="electionCode" style="display:none;">
+				<option value="-1">▽ 선 택</option>
+				<!-- option value="0" >▷ 전 체</option -->
+				<option value="2" selected>국회의원선거</option>
+				<option value="3" >시·도지사선거</option>
+				<option value="4" >구·시·군의장선거</option>
+				<option value="5" >시·도의회의원선거</option>
+				<option value="6" >구·시·군의회의원선거</option>
+				<option value="7" >비례대표국회의원선거</option>
+				<option value="11" >교육감선거</option>
+				</select>
+
+			<span id="spanCityCode" style="display:none;" >
+			<label id="cityCodeLabel" class="label" for="cityCode">시도</label>
+			<select id="cityCode" name="cityCode">
+				<option class="o_01" value="-1" selected="selected">▽ 선 택</option>
+				<option value="0" >▷ 전 체</option>
+				<option value="1100" >서울특별시</option>
+				<option value="2600" >부산광역시</option>
+				<option value="2700" selected="selected">대구광역시</option>
+				<option value="2800" >인천광역시</option>
+				<option value="2900" >광주광역시</option>
+				<option value="3000" >대전광역시</option>
+				<option value="3100" >울산광역시</option>
+				<option value="5100" >세종특별자치시</option>
+				<option value="4100" >경기도</option>
+				<option value="4200" >강원도</option>
+				<option value="4300" >충청북도</option>
+				<option value="4400" >충청남도</option>
+				<option value="4500" >전라북도</option>
+				<option value="4600" >전라남도</option>
+				<option value="4700" >경상북도</option>
+				<option value="4800" >경상남도</option>
+				<option value="4900" >제주특별자치도</option>
+				</select>
+			</span>
+			
+			<span id="spanSggCityCode" style="display:none">
+				<label id='sggCityCodeLabel' class='label' for="sggCityCode">선거구</label>
+				<select id='sggCityCode' name='sggCityCode'>
+					<option value="0" selected="selected">▷ 전 체</option>
+					<option value="2270101" >중구남구</option>
+			    	<option value="2270201" >동구갑</option>
+			    	<option value="2270202" >동구을</option>
+			    	<option value="2270301" >서구</option>
+			    	<option value="2270501" >북구갑</option>
+			    	<option value="2270502" >북구을</option>
+			    	<option value="2270601" >수성구갑</option>
+			    	<option value="2270602" >수성구을</option>
+			    	<option value="2270701" >달서구갑</option>
+			    	<option value="2270702" >달서구을</option>
+			    	<option value="2270703" >달서구병</option>
+			    	<option value="2270801" >달성군</option>
+			    	</select>
+			</span>
+
+			<span id="spanSubmit" style="display:none;" >
+				<input id="searchBtn" type="image" class="btnSearch" src="/common/images/btn_search.gif" alt="검색" tabindex="6"/>
+			</span>
+            </div>
+			</span>
+		</form>
+</div>
+
+<div class="title1">
+		<h3>개표진행상황</h3>
+		<p>HOME &gt; 투/개표정보 &gt; <strong>개표진행</strong></p>
+	</div>
+<div class="searchResult">
+
+	<div class="marginB5 floatL" style="width: 960px;"><h3 class="title2"><img src="/common/images/tit1_01.gif" alt="결과보기" /></h3>
+				</div>
+
+	<!--
+	<div class="marginB5 floatL" style="width: 730px; ">
+		<span style="color: blue;">※ 개표진행상황은 10초마다 자동으로 새로고침 됩니다.</span>
+	</div>
+-->
+
+	<div style="height: 18px; width:100%; float:left;">
+		<span class="tableCaption floatL">
+			<span id="electionName"></span>
+			<span style="color: blue;"> </span>
+		</span>
+		<span class="tableCaption floatR">
+			<span id="cityName"></span>
+		</span>
+	</div>
+
+	<div class="cont_table">
+		<table id="table01" class="table01" summary="개표진행상황"
+		style="width:960px;">
+		<caption>개표진행상황</caption>
+
+<!-- 국회의원/시도지사/비례대표국회의원/교육감이 아닌 경우 -->
+<!-- 국회의원인 경우 -->
+<thead>
+		<tr>
+			<th class="firstTh">선거구명</th>
+			<th class="firstTh">구시군명</th>
+			<th>선거인수</th>
+			<th>투표수</th>
+			<th colspan="11">후보자별 득표수(득표율)</th>
+			<th>무효<br/>투표수</th>
+			<th>기권수</th>
+			<th>개표율</th>
+		</tr>
+		</thead>
+		
+		<tbody>
+		<tr>
+					<td class="firstTd alignL">중구남구</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>김희국</strong></td><td class=alignC><strong>민주통합당<br>김동열</strong></td><td class=alignC><strong>자유선진당<br>조병기</strong></td><td class=alignC><strong>창조한국당<br>김태훈</strong></td><td class=alignC><strong>무소속<br>이재용</strong></td><td class=alignC><strong>무소속<br>박영준</strong></td><td class=alignC><strong>무소속<br>김상인</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">소계</td>
+					<td class=alignR>207,975</td>
+					<td class=alignR>104,232</td>
+					<td class=alignR>58,425<br>(56.87)</td><td class=alignR>8,829<br>(8.59)</td><td class=alignR>927<br>(0.90)</td><td class=alignR>781<br>(0.76)</td><td class=alignR>27,448<br>(26.71)</td><td class=alignR>5,809<br>(5.65)</td><td class=alignR>508<br>(0.49)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>102,727</td>
+					<td class=alignR>1,505</td>
+					<td class=alignR>103,743</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">중구</td>
+					<td class=alignR>64,981</td>
+					<td class=alignR>33,606</td>
+					<td class=alignR>19,267<br>(58.16)</td><td class=alignR>3,140<br>(9.47)</td><td class=alignR>384<br>(1.15)</td><td class=alignR>238<br>(0.71)</td><td class=alignR>7,946<br>(23.98)</td><td class=alignR>2,007<br>(6.05)</td><td class=alignR>145<br>(0.43)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>33,127</td>
+					<td class=alignR>479</td>
+					<td class=alignR>31,375</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">남구</td>
+					<td class=alignR>142,994</td>
+					<td class=alignR>70,626</td>
+					<td class=alignR>39,158<br>(56.26)</td><td class=alignR>5,689<br>(8.17)</td><td class=alignR>543<br>(0.78)</td><td class=alignR>543<br>(0.78)</td><td class=alignR>19,502<br>(28.02)</td><td class=alignR>3,802<br>(5.46)</td><td class=alignR>363<br>(0.52)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>69,600</td>
+					<td class=alignR>1,026</td>
+					<td class=alignR>72,368</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">동구갑</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>유성걸</strong></td><td class=alignC><strong>민주통합당<br>임대윤</strong></td><td class=alignC><strong>친박연합<br>오세호</strong></td><td class=alignC><strong>국민행복당<br>전창국</strong></td><td class=alignC><strong>무소속<br>오태동</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">동구</td>
+					<td class=alignR>114,934</td>
+					<td class=alignR>60,225</td>
+					<td class=alignR>36,342<br>(60.83)</td><td class=alignR>14,142<br>(23.67)</td><td class=alignR>2,727<br>(4.56)</td><td class=alignR>217<br>(0.36)</td><td class=alignR>6,313<br>(10.56)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>59,741</td>
+					<td class=alignR>484</td>
+					<td class=alignR>54,709</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">동구을</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>유승민</strong></td><td class=alignC><strong>민주통합당<br>이승천</strong></td><td class=alignC><strong>친박연합<br>김종기</strong></td><td class=alignC><strong>국민행복당<br>박명호</strong></td><td class=alignC><strong>무소속<br>최종탁</strong></td><td class=alignC><strong>무소속<br>구형근</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">동구</td>
+					<td class=alignR>163,152</td>
+					<td class=alignR>86,157</td>
+					<td class=alignR>57,556<br>(67.40)</td><td class=alignR>14,722<br>(17.24)</td><td class=alignR>2,046<br>(2.39)</td><td class=alignR>473<br>(0.55)</td><td class=alignR>9,131<br>(10.69)</td><td class=alignR>1,459<br>(1.70)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>85,387</td>
+					<td class=alignR>770</td>
+					<td class=alignR>76,995</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">서구</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>김상훈</strong></td><td class=alignC><strong>민주통합당<br>윤선진</strong></td><td class=alignC><strong>자유선진당<br>정재현</strong></td><td class=alignC><strong>미래연합<br>박재술</strong></td><td class=alignC><strong>무소속<br>서중현</strong></td><td class=alignC><strong>무소속<br>박성철</strong></td><td class=alignC><strong>무소속<br>백승정</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">서구</td>
+					<td class=alignR>185,732</td>
+					<td class=alignR>91,074</td>
+					<td class=alignR>54,113<br>(59.97)</td><td class=alignR>9,077<br>(10.06)</td><td class=alignR>658<br>(0.72)</td><td class=alignR>976<br>(1.08)</td><td class=alignR>18,821<br>(20.85)</td><td class=alignR>1,533<br>(1.69)</td><td class=alignR>5,048<br>(5.59)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>90,226</td>
+					<td class=alignR>848</td>
+					<td class=alignR>94,658</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">북구갑</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>권은희</strong></td><td class=alignC><strong>민주통합당<br>김용락</strong></td><td class=alignC><strong>무소속<br>양명모</strong></td><td class=alignC><strong>무소속<br>구본항</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">북구</td>
+					<td class=alignR>121,767</td>
+					<td class=alignR>65,345</td>
+					<td class=alignR>37,201<br>(60.15)</td><td class=alignR>10,113<br>(16.35)</td><td class=alignR>11,772<br>(19.03)</td><td class=alignR>2,758<br>(4.45)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>61,844</td>
+					<td class=alignR>3,501</td>
+					<td class=alignR>56,422</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">북구을</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>서상기</strong></td><td class=alignC><strong>통합진보당<br>조명래</strong></td><td class=alignC><strong>국민생각<br>이찬진</strong></td><td class=alignC><strong>무소속<br>김충환</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">북구</td>
+					<td class=alignR>224,567</td>
+					<td class=alignR>114,588</td>
+					<td class=alignR>66,595<br>(58.57)</td><td class=alignR>27,476<br>(24.16)</td><td class=alignR>2,445<br>(2.15)</td><td class=alignR>17,182<br>(15.11)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>113,698</td>
+					<td class=alignR>890</td>
+					<td class=alignR>109,979</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">수성구갑</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>이한구</strong></td><td class=alignC><strong>민주통합당<br>김부겸</strong></td><td class=alignC><strong>진보신당<br>이연재</strong></td><td class=alignC><strong>무소속<br>김경동</strong></td><td class=alignC><strong>무소속<br>정재웅</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">수성구</td>
+					<td class=alignR>198,232</td>
+					<td class=alignR>115,362</td>
+					<td class=alignR>60,588<br>(52.77)</td><td class=alignR>46,413<br>(40.42)</td><td class=alignR>3,838<br>(3.34)</td><td class=alignR>2,625<br>(2.28)</td><td class=alignR>1,349<br>(1.17)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>114,813</td>
+					<td class=alignR>549</td>
+					<td class=alignR>82,870</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">수성구을</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>주호영</strong></td><td class=alignC><strong>민주통합당<br>남칠우</strong></td><td class=alignC><strong>자유선진당<br>이원기</strong></td><td class=alignC><strong>무소속<br>정기조</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">수성구</td>
+					<td class=alignR>153,779</td>
+					<td class=alignR>79,944</td>
+					<td class=alignR>50,953<br>(64.22)</td><td class=alignR>18,977<br>(23.92)</td><td class=alignR>1,356<br>(1.70)</td><td class=alignR>8,043<br>(10.13)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>79,329</td>
+					<td class=alignR>615</td>
+					<td class=alignR>73,835</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">달서구갑</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>홍지만</strong></td><td class=alignC><strong>민주통합당<br>김준곤</strong></td><td class=alignC><strong>자유선진당<br>김동국</strong></td><td class=alignC><strong>무소속<br>도이환</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">달서구</td>
+					<td class=alignR>146,281</td>
+					<td class=alignR>77,382</td>
+					<td class=alignR>43,570<br>(56.75)</td><td class=alignR>15,460<br>(20.13)</td><td class=alignR>1,045<br>(1.36)</td><td class=alignR>16,694<br>(21.74)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>76,769</td>
+					<td class=alignR>613</td>
+					<td class=alignR>68,899</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">달서구을</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>윤재옥</strong></td><td class=alignC><strong>자유선진당<br>김원이</strong></td><td class=alignC><strong>통합진보당<br>이원준</strong></td><td class=alignC><strong>무소속<br>서영득</strong></td><td class=alignC><strong>무소속<br>김부기</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">달서구</td>
+					<td class=alignR>184,682</td>
+					<td class=alignR>100,291</td>
+					<td class=alignR>61,563<br>(61.87)</td><td class=alignR>3,204<br>(3.22)</td><td class=alignR>18,809<br>(18.90)</td><td class=alignR>9,405<br>(9.45)</td><td class=alignR>6,514<br>(6.54)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>99,495</td>
+					<td class=alignR>796</td>
+					<td class=alignR>84,391</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">달서구병</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>조원진</strong></td><td class=alignC><strong>민주통합당<br>김철용</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">달서구</td>
+					<td class=alignR>138,046</td>
+					<td class=alignR>67,511</td>
+					<td class=alignR>49,842<br>(74.77)</td><td class=alignR>16,812<br>(25.22)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>66,654</td>
+					<td class=alignR>857</td>
+					<td class=alignR>70,535</td>
+					<td class=alignR>100.0</td></tr>
+			<tr>
+					<td class="firstTd alignL">달성군</td>
+					<td class="firstTd alignL"></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignC><strong>새누리당<br>이종진</strong></td><td class=alignC><strong>민주통합당<br>김진향</strong></td><td class=alignC><strong>무소속<br>구성재</strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC><strong><br></strong></td><td class=alignC>계</td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+					<td class=alignR></td>
+				</tr>
+			<tr>
+					<td class="firstTd alignL"></td>
+					<td class="firstTd alignL">달성군</td>
+					<td class=alignR>139,824</td>
+					<td class=alignR>73,193</td>
+					<td class=alignR>40,276<br>(55.63)</td><td class=alignR>15,246<br>(21.06)</td><td class=alignR>16,869<br>(23.30)</td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR></td><td class=alignR>72,391</td>
+					<td class=alignR>802</td>
+					<td class=alignR>66,631</td>
+					<td class=alignR>100.0</td></tr>
+			</tbody>
+	</table>
+	</div>
+<!-- 시도지사인 경우 -->	
+<!-- 교육감인 경우 -->	
+<!-- 비례대표국회의원인 경우 -->
+</div></div>
+        </div>
+</div>
+<ul id="footer_m" class="footer_m">
+	<li><a href="/help/helpMenu.xhtml?selectedName=privacypolicy&electionId=0020120411"><img alt="개인정보처리방침" src="/common/images/common/foter_m1.gif"></a></li>
+	<li><a href="/help/helpMenu.xhtml?selectedName=copyrightpolicy&electionId=0020120411"><img alt="저작권정책" src="/common/images/common/foter_m2.gif"></a></li>
+    <li><a href="/help/helpMenu.xhtml?selectedName=webaccessibilitypolicy&electionId=0020120411"><img alt="웹접근성정책" src="/common/images/common/foter_m3.gif"></a></li>
+</ul>
+<div id="footer" class="footer">
+	<p><img alt="중앙선거관리위원회" src="/common/images/common/fot_logo.gif"></p>
+		<div>
+			<address>(우)427-727 경기도 과천시 홍촌말로 44(중앙동2-3) 대표전화:02-503-1114 신고제보:1390 </address>
+			<p>COPYRIGHT ⓒ2004-2013 NATIONAL ELECTION COMMISSION, ALL RIGHTS RESERVED<br />(※ 본사이트는 인터넷익스플로러8.0 [1024 X 768] 모니터 해상도에 최적화되어 있습니다.)</p>
+		</div>
+</div>
+<script type="text/javascript" src="/common/js/tab.js"></script>
+
+</div>
+</body>
+</html>

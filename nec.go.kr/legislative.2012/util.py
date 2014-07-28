@@ -9,12 +9,12 @@ def get_area_info( province_name, elec_area_name, emd_name ):
 		parent_ea = elec_area_info.get( ( elec_area_info.elec_nm == province_name ) & ( elec_area_info.elec_lvl == 1 ) )
 	except elec_area_info.DoesNotExist:
 		print "cannot find province name:", province_name
-		return None
+		return []
 	try:
 		ea = elec_area_info.get( ( elec_area_info.elec_nm == elec_area_name) & ( elec_area_info.parent_elec == parent_ea.id ) )
 	except elec_area_info.DoesNotExist:
 		print "cannot find election area", elec_area_name, "from province", province_name
-		return None
+		return []
 	print "elec area id:", ea.id
 	area_list = []
 	try:
@@ -25,7 +25,7 @@ def get_area_info( province_name, elec_area_name, emd_name ):
 				area_list.append( suba )
 	except elec_area_relation.DoesNotExist:
 		print "no matching area for", province_name, elec_area_name, emd_name
-		return None
+		return []
 
 	fullname_stack = []
 	for a in area_list:

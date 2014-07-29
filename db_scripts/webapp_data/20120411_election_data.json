@@ -1936,6 +1936,17 @@ var election_data = {
                 "vote_percent":56.29
             }
         },
+        "2430601":{
+            "elec_area_cd":"2430601",
+            "elec_area_nm":"\uccad\uc6d0\uad70",
+            "elect_data":{
+                "party_id":17,
+                "party_nm":"\ubbfc\uc8fc\ud1b5\ud569\ub2f9",
+                "person_nm":"\ubcc0\uc7ac\uc77c",
+                "vote_count":31658,
+                "vote_percent":49.31
+            }
+        },
         "2430701":{
             "elec_area_cd":"2430701",
             "elec_area_nm":"\ubcf4\uc740\uad70\uc625\ucc9c\uad70\uc601\ub3d9\uad70",

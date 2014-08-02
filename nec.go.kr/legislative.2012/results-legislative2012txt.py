@@ -35,12 +35,11 @@ def parse_xlstxt(filename):
         #print type(tokens[0].encode('utf-8'))
         #print repr(tokens[0].encode('utf-8'))
         #print repr(tag_loc1)
-
+        
         if( tokens[0].startswith(tag_fileinfo) ):
             (province_name, city_name) = tokens[-1].split('][')
             province_name = province_name.replace('[','')
             city_name = city_name.replace(']','')
-
         if( tokens[0].startswith(tag_candidate) ):
             tmp_loc = 1
             continue
@@ -54,7 +53,6 @@ def parse_xlstxt(filename):
                                 'candidates':candidates,\
                                 'invalid':int(tokens[-2]), \
                                 'abstention':int(tokens[-1]) }
-            continue
         elif( tokens[0].startswith(tag_remote_domestic ) ):
             remotes_domestic = {'voter':int(tokens[2]), \
                                 'ballot':int(tokens[3]),\
@@ -68,7 +66,7 @@ def parse_xlstxt(filename):
             tmp_loc = 2
             continue
         
-        if( tokens[0] == '' or tokens[0].startswith(tag_sum) ):
+        if( tokens[0] == '' or tokens[0] == tag_sum ):
             tmp_loc = 0
             continue
         if( tokens[0].startswith(tag_wrong_ballot) ):
@@ -100,7 +98,7 @@ def parse_xlstxt(filename):
 f_out = dict()
 f_extra = dict()
 
-dirname_txt = u'legislative2012.xls'
+dirname_txt = u'legislative2012.txt'
 for filename in os.listdir(dirname_txt):
     if( not filename.endswith('.xls.txt') ):
         continue
@@ -130,6 +128,7 @@ for filename in os.listdir(dirname_txt):
     f_extra[province_name].write('%s\t%s\t%s\tNA\t%s\t%d\n'%(rv3['province'],rv3['city'],rv3['town'],u'국내부재자_무효',rv3['invalid']))
     f_extra[province_name].write('%s\t%s\t%s\tNA\t%s\t%d\n'%(rv3['province'],rv3['city'],rv3['town'],u'국내부재자_기권',rv3['abstention']))
 
+    candidate_list = []
     for district_name in rv_votes_district.keys():
         rv1 = rv_votes_district[district_name]
         f_extra[province_name].write('%s\t%s\t%s\t%s\t%s\t%d\n'%(rv1['province'],rv1['city'],rv1['town'],district_name,u'선거권자',rv1['voter']))
@@ -137,9 +136,9 @@ for filename in os.listdir(dirname_txt):
         f_extra[province_name].write('%s\t%s\t%s\t%s\t%s\t%d\n'%(rv1['province'],rv1['city'],rv1['town'],district_name,u'무효',rv1['invalid']))
         f_extra[province_name].write('%s\t%s\t%s\t%s\t%s\t%d\n'%(rv1['province'],rv1['city'],rv1['town'],district_name,u'기권',rv1['abstention']))
 
-        candidate_list = []
-        for i in range(0,len(rv1['candidates']),2):
-            candidate_list.append( '%s\t%s'%(rv1['candidates'][i],rv1['candidates'][i+1]) )
+        if( len(candidate_list) == 0 ):
+            for i in range(0,len(rv1['candidates']),2):
+                candidate_list.append( '%s\t%s'%(rv1['candidates'][i],rv1['candidates'][i+1]) )
         
         idx = 0
         for tmp_candidate in candidate_list:

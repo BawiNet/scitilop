@@ -114,24 +114,11 @@ if 'area_info' in basedata_config.keys():
 						area.sig_cd = data['properties']['Name']
 						area.sig_nm = data['properties']['Description']
 						area.geoJSON = json.dumps( data['geometry'], ensure_ascii = False, separators=(',', ': ') ) 
-						area.valid_from = "2014-01-01"
+						area.valid_from = "1948-08-15"
 						area.valid_to = "9999-12-31"
 						area.coord_sys = "WGS84"
-						area.sig_lvl = sig_lvl
-						if sig_lvl == 2:
-							#print sig_lvl
-							try:
-								parent = area_info.get( area_info.sig_cd == area.sig_cd[0:2] )
-								area.parent_area = parent.id
-							except area_info.DoesNotExist:
-								print "no parent area"
-						elif sig_lvl == 3:
-						#	print sig_lvl
-							try:
-								parent = area_info.get( area_info.sig_cd == area.sig_cd[0:5] )
-								area.parent_area = parent.id
-							except area_info.DoesNotExist:
-								print "no parent area"
+						area.sig_lvl = str( sig_lvl	)
+						area.check_parent()
 						area.save()
 
 
@@ -388,7 +375,7 @@ if key in basedata_config.keys():
 					counting.election_info = elec.id
 					counting.elec_area_info = elec_area.id
 					counting.counting_percent = 100.0
-					counting.total_count = vote_result[0]
+					counting.eligible_count = vote_result[0]
 					counting.vote_count = vote_result[1]
 					counting.invalid_count = vote_result[2]
 					counting.abstention_count = vote_result[3]
@@ -400,9 +387,29 @@ if key in basedata_config.keys():
 				max_vote_result_id = -1
 				vote_result_list = result_data_hash[elec_date][elec_area_cd]['candidate_result']
 		
+				candidate_list = [ c for c in candidate_info.select().where( ( candidate_info.election_info == elec.id ) &
+																											( candidate_info.elec_area_info == elec_area.id ) ) ]
+		
+				# 정당 및 후보자 정보 없으면 오류.
 				for vote_result in vote_result_list:
 					candidate_num, party_nm, candidate_nm, sex, vote_count, vote_percent = vote_result
 					print "  ",party_nm, candidate_nm
+					
+					candidate = candidate_info()
+					candidate_found = False
+					# 후보자 정보 찾기
+					for c in candidate_list:
+						#print c.party_info.party_nm, party_nm, c.person_info.name, candidate_nm #, c.candidate_num, type( c.candidate_num ), candidate_num, type( candidate_num )
+						if c.party_info.party_nm == party_nm and c.person_info.name == candidate_nm:# and c.candidate_num == candidate_num:
+							# 찾았음
+							candidate = c
+							candidate_found = True
+							break
+					if candidate_found == False:
+						print "cannot find candidate", elec.elec_date, ea.elec_nm, candidate_num, party_nm, candidate_nm, sex
+						continue
+
+					''' obsolete 8.1.2014 동명이인이 있을 경우 인물정보 잘못 가져오는 경우 있음. 후보자 정보가 이미 있다고 가정하고 짜는 편이 나음.
 					try:
 						party = party_info.get( ( party_info.party_nm == party_nm ) & ( party_info.valid_from < elec_date  ) & ( party_info.valid_to > elec_date ) )
 					except party_info.DoesNotExist:
@@ -445,7 +452,8 @@ if key in basedata_config.keys():
 					else:
 						
 						print "already_exist:", candidate.election_info.elec_title, candidate.elec_area_info.elec_nm, candidate.party_info.party_nm, candidate.person_info.id, candidate.person_info.name
-		
+					'''
+					
 					try:
 						eresult = election_result.get( ( election_result.counting_info == counting.id ) & (election_result.candidate_info == candidate.id ) )
 					except election_result.DoesNotExist:

@@ -124,6 +124,8 @@ for k in elec_area_data.keys():
 					#print party_nm, person_nm
 					election_result[elec_date][ea.elec_cd]['candidate_result'].append( [ candidate.candidate_num, party_nm, person_nm, candidate.person_info.sex ] )
 			sum_mode = False
+			single_area = False
+			multi_area = False
 		else: # 선거결과 
 			if td_list[1].contents[0] == u"소계": # 소계 라인
 				sum_mode = True

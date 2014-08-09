@@ -45,7 +45,7 @@ if 'election_info' in basedata_config.keys():
 				elec.save()
 				continue
 			
-			print "already exist", elec_data[2]
+			#print "already exist", elec_data[2]
 
 ''' 선거구정보 입력 '''
 key = 'elec_area_info'
@@ -80,7 +80,8 @@ if key in basedata_config.keys():
 				ea.save()
 				continue
 			else:
-				print "already exist", elec_cd, elec_data
+				pass
+				#print "already exist", elec_cd, elec_data
 
 
 ''' 행정구역 정보 입력 ''' 
@@ -107,7 +108,7 @@ if 'area_info' in basedata_config.keys():
 				for data in actual_data['features']:
 					try:
 						area = area_info.get( area_info.sig_cd == data['properties']['Name'] )
-						print "already exist", data['properties']['Name'], data['properties']['Description']
+						#print "already exist", data['properties']['Name'], data['properties']['Description']
 					except area_info.DoesNotExist:
 						print "new data", data['properties']['Name'], data['properties']['Description'], sig_lvl
 						area = area_info()
@@ -120,6 +121,172 @@ if 'area_info' in basedata_config.keys():
 						area.sig_lvl = str( sig_lvl	)
 						area.check_parent()
 						area.save()
+
+key = 'area_info_history'
+if key in basedata_config.keys():
+	print "loading area_info_history"
+	info_type = basedata_config[key]['type']
+	if info_type == 'file':
+		filename = basedata_config[key]['location']
+		json_file = open( filename, 'r' )
+		area_info_history_hash = json.load( json_file )
+		json_file.close()
+
+		for change_date in area_info_history_hash.keys():
+			changes_list = area_info_history_hash[change_date]
+			print change_date
+			for change in changes_list:
+				print change['sig_cd']
+				new_cd = change['sig_cd']
+				if change['type'] == u'신설':
+					try:
+						area = area_info.get( area_info.sig_cd == new_cd )
+					except area_info.DoesNotExist:
+						print "adding new area_info", new_cd, change['sig_nm']
+						area = area_info()
+						area.sig_cd = new_cd
+						area.sig_nm = change['sig_nm']
+						area.valid_to = "9999-12-31"
+					else:
+						print "updating area_info that already exists", new_cd, change['sig_nm']
+						#continue
+					area.valid_from = change_date
+					area.check_sig_lvl()
+					parent = area.check_parent()
+					if parent == None:
+						print "no parent for", area.sig_cd
+						continue
+					area.save()
+				elif change['type'] == u'변경':
+					try:
+						area = area_info.get( area_info.sig_cd == new_cd )
+						print "updating area_info", new_cd, change['sig_nm']
+					except area_info.DoesNotExist:
+						print "adding new area_info", new_cd, change['sig_nm']
+						area = area_info()
+						area.sig_cd = new_cd
+						area.sig_nm = change['sig_nm']
+						area.valid_to = "9999-12-31"
+						sig_lvl = area.check_sig_lvl()
+						parent = area.check_parent()
+						if parent == None:
+							print "no parent for", area.sig_cd
+							continue
+					area.valid_from = change_date
+					area.save()
+		
+					try:
+						prev_area = area_info.get( area_info.sig_cd == change['prev_cd'] )
+						print "updating area_info", change['prev_cd'], change['prev_nm']
+					except area_info.DoesNotExist:
+						print "adding new area_info", change['prev_cd'], change['prev_nm']
+						prev_area = area_info()
+						prev_area.sig_cd = change['prev_cd']
+						prev_area.sig_nm = change['prev_nm']
+						prev_area.valid_from = "1948-08-15"
+						sig_lvl = prev_area.check_sig_lvl()
+						parent = prev_area.check_parent()
+						if parent == None:
+							print "no parent for", prev_area.sig_cd
+							continue
+					
+					prev_area.valid_to = calculate_date( change_date, -1 )
+					prev_area.next_area = area.id
+		
+					if prev_area.geoJSON == None and area.geoJSON != None:
+						prev_area.geoJSON = area.geoJSON
+					prev_area.save()
+					
+					area.prev_area = prev_area.id
+					if area.geoJSON == None and prev_area.geoJSON != None:
+						area.geoJSON = prev_area.geoJSON
+					area.save()
+		
+				elif change['type'] == u'분리':
+					print u"분리"
+					try:
+						prev_area = area_info.get( area_info.sig_cd == change['prev_cd'] )
+					except area_info.DoesNotExist:
+						prev_area = area_info()
+						prev_area.sig_cd = change['prev_cd']
+						prev_area.sig_nm = change['prev_nm']
+						prev_area.valid_from = "1948-08-15"
+						sig_lvl = prev_area.check_sig_lvl()
+						parent = prev_area.check_parent()
+						if parent == None:
+							print "no parent for", prev_area.sig_cd
+							continue
+					prev_area.valid_to = calculate_date( change_date, -1 )
+					prev_area.next_area = None
+					prev_area.save()
+		
+					try:
+						area = area_info.get( area_info.sig_cd == new_cd )
+					except area_info.DoesNotExist:
+						area = area_info()
+						area.sig_cd = new_cd
+						area.sig_nm = change['sig_nm']
+						area.valid_to = "9999-12-31"
+						sig_lvl = area.check_sig_lvl()
+						parent = area.check_parent()
+						if parent == None:
+							print "no parent for", area.sig_cd
+							continue
+					area.valid_from = change_date
+					area.prev_area = prev_area.id
+					area.save()
+		
+				elif change['type'] == u'통합':
+					print u"통합"
+					try:
+						area = area_info.get( area_info.sig_cd == new_cd )
+					except area_info.DoesNotExist:
+						area = area_info()
+						area.sig_cd = new_cd
+						area.sig_nm = change['sig_nm']
+						area.valid_to = "9999-12-31"
+						sig_lvl = area.check_sig_lvl()
+						parent = area.check_parent()
+						if parent == None:
+							print "no parent for", area.sig_cd
+							continue
+					area.valid_from = change_date
+					area.prev_area = None
+					area.save()
+		
+					try:
+						prev_area = area_info.get( area_info.sig_cd == change['prev_cd'] )
+					except area_info.DoesNotExist:
+						prev_area = area_info()
+						prev_area.sig_cd = change['prev_cd']
+						prev_area.sig_nm = change['prev_nm']
+						prev_area.valid_from = "1948-08-15"
+						sig_lvl = prev_area.check_sig_lvl()
+						parent = prev_area.check_parent()
+						if parent == None:
+							print "no parent for", prev_area.sig_cd
+							continue
+					prev_area.valid_to = calculate_date( change_date, -1 )
+					prev_area.next_area = area.id
+					prev_area.save()
+				elif change['type'] == u'폐지':
+					print u"폐지"
+					try:
+						area = area_info.get( area_info.sig_cd == new_cd )
+					except area_info.DoesNotExist:
+						area = area_info()
+						area.sig_cd = new_cd
+						area.sig_nm = change['sig_nm']
+						area.valid_from = "1948-08-15"
+					sig_lvl = area.check_sig_lvl()
+					parent = area.check_parent()
+					if parent == None:
+						print "no parent for", area.sig_cd
+						continue
+					area.valid_to = calculate_date( change_date, -1 )
+					area.save()
+					
+
 
 
 ''' 선거-선거구 매핑 정보 입력: deprecated '''  
@@ -156,7 +323,8 @@ if False:
 							eearel.elec_area_info = elec_area.id
 							eearel.save()
 						else:
-							print "already exist", elec_date, elec_cd, eearel.id
+							pass
+							#print "already exist", elec_date, elec_cd, eearel.id
 
 
 ''' 선거-선거구, 선거구-행정구역 매핑 정보 입력 ''' 
@@ -203,7 +371,8 @@ if key in basedata_config.keys():
 						eearel.elec_area_info = ea.id
 						eearel.save()
 					else:
-						print "already exist", e.elec_title, ea.elec_nm
+						pass
+						#print "already exist", e.elec_title, ea.elec_nm
 			
 			
 				area_hash = elec_area_mapping_hash[elec_cd]['area_hash']
@@ -225,7 +394,8 @@ if key in basedata_config.keys():
 						earel.area_info = a.id
 						earel.save()			
 					else:
-						print "already there", ea.elec_nm, a.sig_nm
+						#print "already there", ea.elec_nm, a.sig_nm
+						pass
 
 ''' 정당정보 입력 '''
 key = 'party_info'
@@ -258,7 +428,8 @@ if key in basedata_config.keys():
 						party_list[-1].save()
 					party_list.append( party )
 				else:
-					print "already exist", party_nm, valid_from
+					pass
+					#print "already exist", party_nm, valid_from
 
 
 ''' 각 선거 후보자 정보 입력 '''
@@ -329,7 +500,8 @@ if key in basedata_config.keys():
 						candidate.candidate_num = cand_num
 						candidate.save()
 					else:
-						print "already exist", election.elec_date, elec_area.elec_nm, party.party_nm, person.name
+						pass
+						#print "already exist", election.elec_date, elec_area.elec_nm, party.party_nm, person.name
 		
 
 ''' 역대 선거 결과 입력 '''

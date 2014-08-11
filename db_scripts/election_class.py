@@ -84,6 +84,17 @@ class area_info( data_model ):
 			self.parent_area = parent.id
 		return parent
 
+	@classmethod
+	def get_area_by_cd( cls, a_sig_cd, a_date = ""):
+		if a_date == "":
+			a_date = str( date.today() )
+		#print a_sig_cd, a_date
+		#try:
+		area = area_info.get( ( area_info.sig_cd == a_sig_cd ) & ( area_info.valid_from <a_date ) & ( area_info.valid_to > a_date ) )
+		#except area_info.DoesNotExist:
+			#raise
+		return area
+
 class election_info( data_model  ):
 	id = PrimaryKeyField()
 	elec_title = CharField()

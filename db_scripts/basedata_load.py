@@ -116,13 +116,18 @@ if 'area_info' in basedata_config.keys():
 						area = area_info()
 						area.sig_cd = data['properties']['Name']
 						area.sig_nm = data['properties']['Description']
-						area.geoJSON = json.dumps( data['geometry'], ensure_ascii = False, separators=(',', ': ') ) 
 						area.valid_from = "1948-08-15"
 						area.valid_to = "9999-12-31"
 						area.coord_sys = "WGS84"
 						area.sig_lvl = str( sig_lvl	)
 						area.check_parent()
 						area.save()
+						boundary= area_boundary_info()
+						boundary.valid_from = "1948-08-15"
+						boundary.valid_to = "9999-12-31"
+						boundary.geojson= json.dumps( data['geometry'], ensure_ascii = False, separators=(',', ': ') ) 
+						boundary.area_info = area.id
+						boundary.save()
 
 key = 'area_info_history'
 if key in basedata_config.keys():
@@ -159,7 +164,8 @@ if key in basedata_config.keys():
 						print "no parent for", area.sig_cd
 						continue
 					area.save()
-				elif change['type'] == u'변경':
+					
+				elif change['type'] == u'변경': # 코드/행정구역명이 바뀌는 경우. 경계는 안 바뀜.
 					try:
 						area = area_info.get_area_by_cd( new_cd, change_date )
 						print "updating area_info", new_cd, change['sig_nm']
@@ -169,43 +175,63 @@ if key in basedata_config.keys():
 						area.sig_cd = new_cd
 						area.sig_nm = change['sig_nm']
 						area.valid_to = "9999-12-31"
-						sig_lvl = area.check_sig_lvl()
-						parent = area.check_parent()
-						if parent == None:
-							print "no parent for", area.sig_cd
-							continue
 					area.valid_from = change_date
+					sig_lvl = area.check_sig_lvl()
+					parent = area.check_parent()
+					if parent == None:
+						print "no parent for", area.sig_cd
+						continue
 					area.save()
 		
 					try:
-						prev_area = area_info.get_area_by_cd( change['prev_cd'], change_date )
+						last_date = calculate_date( change_date, -1 )
+						prev_area = area_info.get_area_by_cd( change['prev_area'][0]['sig_cd'], last_date )
 						#prev_area = area_info.get( area_info.sig_cd == change['prev_cd'] )
-						print "updating area_info", change['prev_cd'], change['prev_nm']
+						print "updating area_info", change['prev_area'][0]['sig_cd'], change['prev_area'][0]['sig_nm']
 					except area_info.DoesNotExist:
-						print "adding new area_info", change['prev_cd'], change['prev_nm']
+						print "adding new area_info", change['prev_area'][0]['sig_cd'], change['prev_area'][0]['sig_nm']
 						prev_area = area_info()
-						prev_area.sig_cd = change['prev_cd']
-						prev_area.sig_nm = change['prev_nm']
+						prev_area.sig_cd = change['prev_area'][0]['sig_cd']
+						prev_area.sig_nm = change['prev_area'][0]['sig_nm']
 						prev_area.valid_from = "1948-08-15"
-						sig_lvl = prev_area.check_sig_lvl()
-						parent = prev_area.check_parent()
+
+					prev_area.valid_to = calculate_date( change_date, -1 )
+					prev_area.next_area = area.id
+					sig_lvl = prev_area.check_sig_lvl()
+					parent = prev_area.check_parent()
+					if parent == None:
+						print "no parent for", prev_area.sig_cd
+						continue
+					prev_area.save()
+					prev_area.check_boundary()
+		
+					area.prev_area = prev_area.id
+					area.save()
+					area.check_boundary()
+					area.fill_boundary( prev_area )
+
+				elif change['type'] == u'경계변경':
+					print u"경계변경"
+					try:
+						area = area_info.get_area_by_cd( change['sig_cd'], change_date )
+					except area_info.DoesNotExist:
+						print "no such area", change['sig_cd'], change_date
+						continue
+						
+						area = area_info()
+						area.sig_cd = change['sig_cd']
+						area.sig_nm = change['sig_nm']
+						area.valid_from = "1948-08-15"
+						area.valid_from = "9999-12-31"
+						sig_lvl = area.check_sig_lvl()
+						parent = area.check_parent()
 						if parent == None:
 							print "no parent for", prev_area.sig_cd
 							continue
+						area.save()
 					
-					prev_area.valid_to = calculate_date( change_date, -1 )
-					prev_area.next_area = area.id
-		
-					if prev_area.geoJSON == None :
-						if area.geoJSON != None:
-							prev_area.geoJSON = area.geoJSON
-					prev_area.save()
-					
-					area.prev_area = prev_area.id
-					if area.geoJSON == None and prev_area.geoJSON != None:
-						area.geoJSON = prev_area.geoJSON
-					area.save()
-		
+					area.divide_boundary( change_date )
+							
 				elif change['type'] == u'분리':
 					print u"분리"
 					try:
@@ -216,16 +242,16 @@ if key in basedata_config.keys():
 						prev_area.sig_cd = change['sig_cd']
 						prev_area.sig_nm = change['sig_nm']
 						prev_area.valid_from = "1948-08-15"
-						sig_lvl = prev_area.check_sig_lvl()
-						parent = prev_area.check_parent()
-						if parent == None:
-							print "no parent for", prev_area.sig_cd
-							continue
 					prev_area.valid_to = calculate_date( change_date, -1 )
+					sig_lvl = prev_area.check_sig_lvl()
+					parent = prev_area.check_parent()
+					if parent == None:
+						print "no parent for", prev_area.sig_cd
+						continue
 					prev_area.next_area = None
 					prev_area.save()
+					prev_area.check_boundary()
 
-					geojson_list = []
 					for next_data in change['next_area']:		
 						try:
 							area = area_info.get_area_by_cd( next_data['sig_cd'], change_date )
@@ -235,27 +261,15 @@ if key in basedata_config.keys():
 							area.sig_cd = next_data['sig_cd']
 							area.sig_nm = next_data['sig_nm']
 							area.valid_to = "9999-12-31"
-							sig_lvl = area.check_sig_lvl()
-							parent = area.check_parent()
-							if parent == None:
-								print "no parent for", area.sig_cd
-								continue
-						if area.geoJSON != None:
-							geojson_list.append( area.geoJSON )
 						area.valid_from = change_date
+						sig_lvl = area.check_sig_lvl()
+						parent = area.check_parent()
+						if parent == None:
+							print "no parent for", area.sig_cd
+							continue
 						area.prev_area = prev_area.id
 						area.save()
-
-					if len( geojson_list ) > 0:
-						new_geometry = { 'type': 'MultiPolygon', 'coordinates': [] }
-						for geometry in geojson_list:
-							jsondata = json.loads( geometry )
-							if jsondata ['type'] == 'Polygon':
-								new_geometry['coordinates'].append( jsondata['coordinates'] )
-							elif geometry ['type'] == 'MultiPolygon':
-								new_geometry['coordinates'].extend( jsondata['coordinates'] )
-						prev_area.geoJSON = json.dumps( new_geometry, ensure_ascii = False, separators=(',', ': ') ) 
-						prev_area.save()
+						area.check_boundary()
 
 				elif change['type'] == u'통합':
 					print u"통합"
@@ -267,16 +281,17 @@ if key in basedata_config.keys():
 						area.sig_cd = new_cd
 						area.sig_nm = change['sig_nm']
 						area.valid_to = "9999-12-31"
-						sig_lvl = area.check_sig_lvl()
-						parent = area.check_parent()
-						if parent == None:
-							print "no parent for", area.sig_cd
-							continue
 					area.valid_from = change_date
+					sig_lvl = area.check_sig_lvl()
+					parent = area.check_parent()
+					if parent == None:
+						print "no parent for", area.sig_cd
+						continue
 					area.prev_area = None
 					area.save()
-		
-					geojson_list = []
+					area.check_boundary()
+
+					#geojson_list = []
 					for prev_data in change['prev_area']:		
 						try:
 							#prev_area = area_info.get( area_info.sig_cd == change['prev_cd'] )
@@ -286,28 +301,16 @@ if key in basedata_config.keys():
 							prev_area.sig_cd = prev_data['sig_cd']
 							prev_area.sig_nm = prev_data['sig_nm']
 							prev_area.valid_from = "1948-08-15"
-							sig_lvl = prev_area.check_sig_lvl()
-							parent = prev_area.check_parent()
-							if parent == None:
-								print "no parent for", prev_area.sig_cd
-								continue
 						prev_area.valid_to = calculate_date( change_date, -1 )
-						if prev_area.geoJSON != None:
-							geojson_list.append( prev_area.geoJSON )
+						sig_lvl = prev_area.check_sig_lvl()
+						parent = prev_area.check_parent()
+						if parent == None:
+							print "no parent for", prev_area.sig_cd
+							continue
 						prev_area.next_area = area.id
 						prev_area.save()
+						prev_area.check_boundary()
 
-					if len( geojson_list ) > 0:
-						new_geometry = { 'type': 'MultiPolygon', 'coordinates': [] }
-						for geometry in geojson_list:
-							jsondata = json.loads( geometry )
-							if jsondata['type'] == 'Polygon':
-								new_geometry['coordinates'].append( jsondata['coordinates'] )
-							elif geometry ['type'] == 'MultiPolygon':
-								new_geometry['coordinates'].extend( jsondata['coordinates'] )
-						area.geoJSON = json.dumps( new_geometry, ensure_ascii = False, separators=(',', ': ') ) 
-						area.save()
-						
 				elif change['type'] == u'폐지':
 					print u"폐지"
 					try:
@@ -318,21 +321,23 @@ if key in basedata_config.keys():
 						area.sig_cd = new_cd
 						area.sig_nm = change['sig_nm']
 						area.valid_from = "1948-08-15"
+					area.valid_to = calculate_date( change_date, -1 )
 					sig_lvl = area.check_sig_lvl()
 					parent = area.check_parent()
 					if parent == None:
 						print "no parent for", area.sig_cd
 						continue
-					area.valid_to = calculate_date( change_date, -1 )
 					area.save()
+					area.check_boundary()
 
 ''' 비어 있는 geojson 채우기 '''
-area_list = [ area for area in area_info.select().where( area_info.geoJSON == None ) ]
+boundary_list = [ boundary for boundary in area_boundary_info.select().where( area_boundary_info.geojson == None ) ]
 
 
-for area in area_list:
+for boundary in boundary_list:
+	area = boundary.area_info
 	sig_cd = area.sig_cd
-	year = area.valid_to.year
+	year = boundary.valid_to.year
 	#year = int( y )
 	if year < 9999:
 		year = year - 1
@@ -346,13 +351,15 @@ for area in area_list:
 			new_geometry = { 'type': 'MultiPolygon', 'coordinates': [] }
 			for prev in prev_list:
 				print "  ",prev.sig_cd
-				prev_json = json.loads( prev.geoJSON )
-				if prev_json['type'] == 'Polygon':
-					new_geometry['coordinates'].append( prev_json['coordinates'] )
-				elif prev_json['type'] == 'MultiPolygon':
-					new_geometry['coordinates'].extend( prev_json['coordinates'] )
-			area.geoJSON = json.dumps( new_geometry, ensure_ascii = False, separators=(',', ': ') ) 
-			area.save()
+				prev_boundary_list = [ b for b in prev.boundaries ]
+				if prev_boundary_list > 0 and prev_boundary_list[-1].geojson != None:
+					prev_json = json.loads( prev_boundary_list[-1].geojson )
+					if prev_json['type'] == 'Polygon':
+						new_geometry['coordinates'].append( prev_json['coordinates'] )
+					elif prev_json['type'] == 'MultiPolygon':
+						new_geometry['coordinates'].extend( prev_json['coordinates'] )
+			boundary.geojson = json.dumps( new_geometry, ensure_ascii = False, separators=(',', ': ') ) 
+			boundary.save()
 		else:
 			print "no multiple previous areas"
 	else:
@@ -364,10 +371,11 @@ for area in area_list:
 				geometry['coordinates'] = convert_polygon_local( geometry['coordinates'] )
 			elif ( geometry['type'] == "MultiPolygon" ):
 				geometry['coordinates'] = convert_multipolygon_local( geometry['coordinates'] )
-			area.geoJSON = json.dumps( geometry, ensure_ascii = False, separators=(',', ': ') ) 
-			area.save()
+			boundary.geojson = json.dumps( geometry, ensure_ascii = False, separators=(',', ': ') ) 
+			boundary.save()
 			
 ''' 2012 년 7 월 1 일 세종시 신설 시 공주시와 청원군 일부가 편입되어 공주시 34020 와 청원군 33310 은 모양이 바뀜...'''
+''' deprecated
 area_list = [ area for area in area_info.select().where( area_info.sig_cd << [ '34020', '33310' ] ) ]
 if len( area_list ) == 2:
 	for area in area_list:
@@ -398,7 +406,7 @@ if len( area_list ) == 2:
 		
 		area.prev_area = prev_area.id
 		area.save()
-
+'''
 
 ''' 선거-선거구, 선거구-행정구역 매핑 정보 입력 ''' 
 

@@ -32,6 +32,8 @@ if counting_info.table_exists():
 	counting_info.drop_table()
 if elec_area_info.table_exists():
 	elec_area_info.drop_table()
+if area_boundary_info.table_exists():
+	area_boundary_info.drop_table()
 if area_info.table_exists():
 	area_info.drop_table()
 if election_info.table_exists():
@@ -43,6 +45,7 @@ if party_info.table_exists():
 
 print "create tables"
 area_info.create_table()
+area_boundary_info.create_table()
 election_info.create_table()
 elec_area_info.create_table()
 elec_area_relation.create_table()

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import mysql.connector
 import sqlite3
 from peewee import *
@@ -47,7 +50,6 @@ class area_info( data_model ):
 	sig_lvl = CharField()
 	sig_cd = CharField()
 	sig_nm = CharField()
-	geoJSON = TextField( null = True )
 	valid_from = DateField( null = True )
 	valid_to = DateField( null = True )
 	prev_area = ForeignKeyField( 'self', related_name = 'next', null = True )
@@ -77,13 +79,95 @@ class area_info( data_model ):
 				return None
 
 			try:
-				parent = area_info.get( area_info.sig_cd == parent_cd )
+				parent = area_info.get( ( area_info.sig_cd == parent_cd ) & ( area_info.valid_to >= self.valid_to ) & ( area_info.valid_from <= self.valid_from ) )
 			except area_info.DoesNotExist:
-				print "no such parent area", parent_cd
+				print "no such parent area", parent_cd, self.valid_to, self.valid_from
 				return None
 			self.parent_area = parent.id
+		else:
+			return True
 		return parent
 
+	def check_boundary( self ):
+		b_list = [ b for b in self.boundaries ]
+		if len( b_list ) > 0 :
+			for b in self.boundaries:
+				if str( self.valid_to ) < str( b.valid_to ) and str( self.valid_to ) > str( b.valid_from ):
+					b.valid_to = self.valid_to
+					b.save()
+				elif str( self.valid_from ) > str( b.valid_from ) and str( self.valid_to ) < str( b.valid_to ):
+					b.valid_from = self.valid_from
+					b.save()
+		else:
+			b = area_boundary_info()
+			b.valid_from = self.valid_from
+			b.valid_to = self.valid_to
+			b.area_info = self.id
+			b.save()
+		return
+		
+	def fill_boundary( self, a_area ):
+		if str( self.valid_from ) > str( a_area.valid_from ):
+			next_area = self
+			prev_area = a_area
+		else:
+			next_area = a_area
+			prev_area = self
+		print prev_area.sig_nm, prev_area.valid_from, prev_area.valid_to, next_area.sig_nm, next_area.valid_from, next_area.valid_to
+		prev_boundary_list = [ b for b in prev_area.boundaries ]
+		next_boundary_list = [ b for b in next_area.boundaries ]
+		print prev_boundary_list[0].valid_from, prev_boundary_list[0].valid_to, type( prev_boundary_list[0].geojson )
+		print prev_boundary_list[-1].valid_from, prev_boundary_list[-1].valid_to, type( prev_boundary_list[-1].geojson )
+		print next_boundary_list[0].valid_from, next_boundary_list[0].valid_to, type( next_boundary_list[0].geojson )
+		print next_boundary_list[-1].valid_from, next_boundary_list[-1].valid_to, type( next_boundary_list[-1].geojson )
+		if len( prev_boundary_list ) == 0:
+			b = area_boundary_info()
+			b.valid_from = prev_area.valid_from
+			b.valid_to = prev_area.valid_to
+			b.area_info = prev_area.id
+			b.save()
+			prev_boundary_list.append( b )
+		if len( next_boundary_list ) == 0:
+			b = area_boundary_info()
+			b.valid_from = next_area.valid_from
+			b.valid_to = next_area.valid_to
+			b.area_info = next_area.id
+			b.save()
+			next_boundary_list.append( b )
+			
+		if prev_boundary_list[-1].geojson == None and next_boundary_list[0].geojson != None:
+			prev_boundary_list[-1].geojson = next_boundary_list[0].geojson
+			prev_boundary_list[-1].save()
+		elif prev_boundary_list[-1].geojson != None and next_boundary_list[0].geojson == None:
+			next_boundary_list[0].geojson = prev_boundary_list[-1].geojson
+			next_boundary_list[0].save()
+		return
+
+	def divide_boundary( self, a_date ):
+		init_date = '2013-01-01' #초기 입력 데이타 기준일자 (SGIS 에서 최신이라고 가져온 자료들)
+
+		b_list = [ b for b in self.boundaries ]
+		for b in b_list:
+			if str( a_date ) < str( b.valid_to ) and str( a_date ) > str( b.valid_from) :
+				newb = area_boundary_info()
+				if a_date > init_date:
+					b.valid_to = calculate_date( a_date, -1 )
+					b.save()
+					newb.valid_from = a_date
+					newb.valid_to = self.valid_to
+				else:
+					b.valid_from = a_date
+					b.save()
+					newb.valid_from = self.valid_from
+					newb.valid_to = calculate_date( a_date, -1 )
+				newb.area_info = self.id
+				newb.save()
+		return
+	def get_boundary_geojson( self, a_date ):
+		b_list = [ b for b in self.boundaries ]
+		for b in b_list:
+			if str( a_date ) <= str( b.valid_to ) and str( a_date ) >= str( b.valid_from) :
+				return b.geojson
 	@classmethod
 	def get_area_by_cd( cls, a_sig_cd, a_date = ""):
 		if a_date == "":
@@ -94,6 +178,15 @@ class area_info( data_model ):
 		#except area_info.DoesNotExist:
 			#raise
 		return area
+
+class area_boundary_info( data_model ):
+	id = PrimaryKeyField()
+	area_info = ForeignKeyField( area_info, related_name = 'boundaries' )
+	valid_from = DateField( null = True )
+	valid_to = DateField( null = True )
+	geojson = TextField( null = True )
+	class Meta:
+		order_by = [ 'valid_from' ]
 
 class election_info( data_model  ):
 	id = PrimaryKeyField()

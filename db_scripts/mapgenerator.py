@@ -55,8 +55,8 @@ if len( args.sido_cd ) > 0:
 		print len( area2_list ), "lv2 areas"
 		print len( area3_list ), "lv3 areas"
 else:
-	lv2_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.sig_lvl == '2' ) )
-	area2_list = [ area for area in lv2_areas ]
+	lv3_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.sig_lvl == '3' ) )
+	area3_list = [ area for area in lv3_areas ]
 
 features = []
 # merge geoJSON
@@ -81,11 +81,13 @@ sgg = {	"crs":
 						},
 				"type": "FeatureCollection" 
 			} 
+sgg = { "type" : "FeatureCollection" }
 sgg['features'] = features
 
 #print sgg.keys()
 
-geoJSON = "var sgg = " + json.dumps( sgg, separators = (',', ':'), indent=0 ) + ";"
+#geoJSON = "var sgg = " + json.dumps( sgg, separators = (',', ':'), indent=0 ) + ";"
+geoJSON = json.dumps( sgg, separators = (',', ':') )
 json_lines = geoJSON.split( "\n" )
 
 filename = "map_" + mapdate + ".geojson"

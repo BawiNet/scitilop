@@ -109,7 +109,7 @@ if 'area_info' in basedata_config.keys():
 		
 				for data in actual_data['features']:
 					try:
-						area = area_info.get_area_by_cd( data['properties']['Name'] )
+						area = area_info.get( area_info.sig_cd == data['properties']['Name'] )
 						#print "already exist", data['properties']['Name'], data['properties']['Description']
 					except area_info.DoesNotExist:
 						print "new data", data['properties']['Name'], data['properties']['Description'], sig_lvl
@@ -164,6 +164,7 @@ if key in basedata_config.keys():
 						print "no parent for", area.sig_cd
 						continue
 					area.save()
+					area.check_boundary()
 					
 				elif change['type'] == u'변경': # 코드/행정구역명이 바뀌는 경우. 경계는 안 바뀜.
 					try:
@@ -493,20 +494,27 @@ if key in basedata_config.keys():
 			party_info_list = party_data_hash[party_rep_nm]
 			party_list = []
 			for party_data in party_info_list:
-				party_nm, valid_from, valid_to = party_data
+				party_nm = party_data[0]
+				valid_from = party_data[1]
+				valid_to = party_data[2]
+				if len( party_data ) > 3:
+					short_nm = party_data[3]
+				#party_nm, valid_from, valid_to = party_data
 				try:
 					party = party_info.get( ( party_info.party_nm == party_nm ) & ( party_info.valid_from == valid_from ) )
 				except party_info.DoesNotExist:
 					print "new party data", party_nm, valid_from, valid_to
 					party = party_info()
 					party.party_nm = party_nm
+					if len( party_data ) > 3:
+						party.short_nm = short_nm
 					party.valid_from = valid_from
 					party.valid_to = valid_to
 					if len( party_list ) > 0 :
-						party.next_party = party_list[-1].id
+						party.prev_party = party_list[-1].id
 					party.save()
 					if len( party_list ) > 0 :
-						party_list[-1].prev_party = party.id
+						party_list[-1].next_party = party.id
 						party_list[-1].save()
 					party_list.append( party )
 				else:

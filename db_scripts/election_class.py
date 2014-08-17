@@ -50,6 +50,7 @@ class area_info( data_model ):
 	sig_lvl = CharField()
 	sig_cd = CharField()
 	sig_nm = CharField()
+	nec_cd = CharField( null = True )
 	valid_from = DateField( null = True )
 	valid_to = DateField( null = True )
 	prev_area = ForeignKeyField( 'self', related_name = 'next', null = True )
@@ -241,6 +242,7 @@ class elec_elec_area_relation( data_model  ):
 class party_info( data_model ):
 	id = PrimaryKeyField()
 	party_nm = CharField()
+	short_nm = CharField( null = True )
 	wikipedia_link = CharField( null = True )
 	valid_from = DateField()
 	valid_to = DateField()
@@ -257,7 +259,7 @@ class person_info( data_model ):
 
 class candidate_info( data_model ):
 	id = PrimaryKeyField()
-	candidate_num = IntegerField()
+	candidate_num = CharField()
 	election_info = ForeignKeyField( election_info )
 	elec_area_info = ForeignKeyField( elec_area_info )
 	person_info = ForeignKeyField( person_info )

@@ -14,7 +14,7 @@ import urllib2
 
 def get_geojson_data( sig_cd, year, save = False ):
 	url_template = 'http://sgis.kostat.go.kr/OpenAPI2/adminBoundaryByCYL.do?apikey=ESGA2014061055294942&format=geojson&code=${sig_cd}&year=${year}&level=LEVEL_00'
-	filename = "geojson_addendum/" + sig_cd + "_" + str( year ) + ".html"
+	filename = "htmldata/geojson_" + sig_cd + "_" + str( year ) + ".html"
 	if os.path.isfile( filename ):
 		f = open( filename, "r" )
 		data = f.read()

@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup
 
 from string import Template
 url_template = 'http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?electionId=0020140604&requestURI=%2Felectioninfo%2F0020140604%2Fcp%2Fcpri03.jsp&topMenuId=CP&secondMenuId=CPRI03&menuId=&statementId=CPRI03_%233&electionCode=${elec_type}&cityCode=${sido_cd}&sggCityCode=${sgg_cd}&townCode=-1&sggTownCode=0&x=24&y=11'
-
+#'http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?electionId=0020140604&requestURI=%2Felectioninfo%2F0020140604%2Fcp%2Fcpri03.jsp&topMenuId=CP&secondMenuId=CPRI03&menuId=&statementId=CPRI03_%235&electionCode=5&cityCode=4900&sggCityCode=-1&townCode=4901&sggTownCode=5490101&x=31&y=9'
 election_type = {
 	1: u"대통령선거",
 	2: u"국회의원선거",
@@ -59,7 +59,7 @@ nec_sido_list = {
 
 
 def get_htmldata( elec_type, sido_cd, sgg_cd ):
-	filename = "htmldata/" + elec_type + "_" + sido_cd + "_" + sgg_cd + ".html"
+	filename = "htmldata/nec_cd_" + elec_type + "_" + sido_cd + "_" + sgg_cd + ".html"
 	if os.path.isfile( filename ):
 		f = open( filename, "r" )
 		data = f.read()
@@ -67,7 +67,7 @@ def get_htmldata( elec_type, sido_cd, sgg_cd ):
 
 	else: #file not exist
 		url = Template( url_template). substitute( { 'elec_type': elec_type, 'sido_cd' : sido_cd, 'sgg_cd': sgg_cd } )
-			
+		print url
 		data = urllib2.urlopen(url).read()
 		f = open( filename, 'w' )
 		#f = codecs.open( filename, encoding='utf-8', mode='w')
@@ -82,7 +82,9 @@ def get_htmldata( elec_type, sido_cd, sgg_cd ):
 log_str = ""
 elec_type = "4"
 elec_date = "2014-06-04"
-
+area_info_nec_cd = {}
+area_info_nec_cd[elec_date] = []
+print elec_date
 for sido_cd in nec_sido_list.keys():
 	sido = area_info.get( ( area_info.sig_nm == nec_sido_list[sido_cd] ) & ( area_info.valid_from < elec_date ) & ( area_info.valid_to > elec_date ) )
 	#print sido.sig_nm, sido.sig_cd, sido_cd
@@ -104,12 +106,14 @@ for sido_cd in nec_sido_list.keys():
 		except area_info.DoesNotExist:
 			print "no such area", area_nm, nec_cd
 			continue
-		#print area.sig_cd, area.sig_nm, nec_cd
+		area_info_nec_cd[elec_date].append( { 'sig_cd': area.sig_cd, 'sig_nm': area.sig_nm, 'nec_cd': nec_cd } )
+		print area.sig_cd, area.sig_nm, nec_cd
 		area.nec_cd = nec_cd
 		area.save()
-#candidate_data_json = json.dumps( candidate_data_hash, separators = (',', ':'), indent=4, sort_keys = True, encoding='utf-8', ensure_ascii=False )
 
-#f = codecs.open("candidate_info.json", encoding='utf-8', mode='w')
-#f.write ( candidate_data_json )
-#f.close()
+nec_cd_json = json.dumps( area_info_nec_cd, separators = (',', ':'), indent=4, sort_keys = True, encoding='utf-8', ensure_ascii=False )
+
+f = codecs.open("area_info_nec_cd.json", encoding='utf-8', mode='w')
+f.write ( nec_cd_json )
+f.close()
 

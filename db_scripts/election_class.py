@@ -114,13 +114,13 @@ class area_info( data_model ):
 		else:
 			next_area = a_area
 			prev_area = self
-		print prev_area.sig_nm, prev_area.valid_from, prev_area.valid_to, next_area.sig_nm, next_area.valid_from, next_area.valid_to
+		#print prev_area.sig_nm, prev_area.valid_from, prev_area.valid_to, next_area.sig_nm, next_area.valid_from, next_area.valid_to
 		prev_boundary_list = [ b for b in prev_area.boundaries ]
 		next_boundary_list = [ b for b in next_area.boundaries ]
-		print prev_boundary_list[0].valid_from, prev_boundary_list[0].valid_to, type( prev_boundary_list[0].geojson )
-		print prev_boundary_list[-1].valid_from, prev_boundary_list[-1].valid_to, type( prev_boundary_list[-1].geojson )
-		print next_boundary_list[0].valid_from, next_boundary_list[0].valid_to, type( next_boundary_list[0].geojson )
-		print next_boundary_list[-1].valid_from, next_boundary_list[-1].valid_to, type( next_boundary_list[-1].geojson )
+		#print prev_boundary_list[0].valid_from, prev_boundary_list[0].valid_to, type( prev_boundary_list[0].geojson )
+		#print prev_boundary_list[-1].valid_from, prev_boundary_list[-1].valid_to, type( prev_boundary_list[-1].geojson )
+		#print next_boundary_list[0].valid_from, next_boundary_list[0].valid_to, type( next_boundary_list[0].geojson )
+		#print next_boundary_list[-1].valid_from, next_boundary_list[-1].valid_to, type( next_boundary_list[-1].geojson )
 		if len( prev_boundary_list ) == 0:
 			b = area_boundary_info()
 			b.valid_from = prev_area.valid_from
@@ -144,7 +144,7 @@ class area_info( data_model ):
 			next_boundary_list[0].save()
 		return
 
-	def divide_boundary( self, a_date ):
+	def expire_boundary( self, a_date ):
 		init_date = '2013-01-01' #초기 입력 데이타 기준일자 (SGIS 에서 최신이라고 가져온 자료들)
 
 		b_list = [ b for b in self.boundaries ]

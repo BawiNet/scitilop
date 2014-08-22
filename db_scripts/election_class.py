@@ -6,6 +6,7 @@ import sqlite3
 from peewee import *
 import sys
 from datetime import date, datetime, timedelta
+import re
 
 import yaml
 import os.path
@@ -51,6 +52,7 @@ class area_info( data_model ):
 	sig_cd = CharField()
 	sig_nm = CharField()
 	nec_cd = CharField( null = True )
+	spcity_cd = CharField( default = '0' ) #특정시 여부. '0': 특정시 아님 '1': 특정시 '2': 특정시에 속한 구
 	valid_from = DateField( null = True )
 	valid_to = DateField( null = True )
 	prev_area = ForeignKeyField( 'self', related_name = 'next', null = True )
@@ -180,6 +182,57 @@ class area_info( data_model ):
 			#raise
 		return area
 
+	@classmethod
+	def search_by_name( cls, sig_nm, a_date = str( date.today() ), sig_lvl = '3', parent_id = None ):
+
+		sig_nm_list = [ sig_nm ]
+
+		if sig_lvl == '3':
+			''' 벌용동 -> 벌룡동, 팔용동 -> 팔룡동 '''
+			if sig_nm == u'벌용동':
+				sig_nm_list.append( u'벌룡동' )
+			if sig_nm == u'팔용동':
+				sig_nm_list.append( u'팔룡동' )
+	
+			m = re.search( ur'제(\d+)', sig_nm )
+			if m:
+				sig_nm_2 = re.sub( ur'제(\d+)', r'\1', sig_nm )
+				sig_nm_list.append( sig_nm_2 )
+			if sig_nm.find( ur'·' ) > -1:
+				sig_nm_list.append( sig_nm.replace( ur'·', ',' ) )
+		elif sig_lvl == '2': # 특정시 관련 처리
+			if sig_nm == u'세종특별자치시':
+				sig_nm_list.append( u'세종시' )
+			special_city_list = [ u'수원시', u'성남시', u'안양시', u'부천시', u'안산시', u'고양시', u'용인시', u'청주시', u'천안시', u'전주시', u'창원시', u'포항시' ]
+			for cityname in special_city_list:
+				if sig_nm.find( cityname ) > -1:
+					sig_nm_list.append( sig_nm.replace( cityname, '' ) )
+
+		found = False
+		area_list = []
+		for sig_nm in sig_nm_list:		
+			try:
+				if parent_id == None:
+					area = area_info.get( ( area_info.sig_nm == sig_nm ) & ( area_info.valid_from < a_date ) & ( area_info.valid_to > a_date ) & ( area_info.sig_lvl == sig_lvl ) )
+				else:
+					area = area_info.get( ( area_info.sig_nm == sig_nm ) & ( area_info.valid_from < a_date ) & ( area_info.valid_to > a_date ) & ( area_info.sig_lvl == sig_lvl ) & ( area_info.parent_area == parent_id ) )
+			except area_info.DoesNotExist:
+				continue
+			else:
+				area_list.append( area )
+				found = True				
+
+		if found:
+			if len( area_list ) > 1 :
+				print "warning: more than one area"
+				return area_list
+			else:
+				return area
+		else:
+			for sig_nm in sig_nm_list:
+				print sig_nm,
+			raise area_info.DoesNotExist
+
 class area_boundary_info( data_model ):
 	id = PrimaryKeyField()
 	area_info = ForeignKeyField( area_info, related_name = 'boundaries' )
@@ -200,6 +253,7 @@ class elec_area_info( data_model  ):
 	elec_lvl = CharField()
 	elec_cd = CharField()
 	elec_nm = CharField()
+	elect_num = IntegerField( default = 1 )
 	geoJSON = TextField( null = True )
 	valid_from = DateField( null = True )
 	valid_to = DateField( null = True )

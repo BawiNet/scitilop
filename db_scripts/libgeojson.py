@@ -12,15 +12,19 @@ from string import Template
 import urllib2
 
 
-def get_geojson_data( sig_cd, year, save = False ):
+def get_geojson_data( sig_cd, year, save = False, local_only = False ):
 	url_template = 'http://sgis.kostat.go.kr/OpenAPI2/adminBoundaryByCYL.do?apikey=ESGA2014061055294942&format=geojson&code=${sig_cd}&year=${year}&level=LEVEL_00'
 	filename = "htmldata/geojson_" + sig_cd + "_" + str( year ) + ".html"
+	print filename
 	if os.path.isfile( filename ):
 		f = open( filename, "r" )
 		data = f.read()
 		f.close()
+		return data
 
 	else: #file not exist
+		if local_only:
+			return ""
 		url = Template( url_template). substitute( { 'sig_cd': sig_cd, 'year' : year } )
 			
 		data = urllib2.urlopen(url).read()

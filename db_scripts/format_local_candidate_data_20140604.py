@@ -15,7 +15,6 @@ from election_class import *
 import time
 import yaml
 import os.path
-data_filename = "./elec_area_code_20120411.txt"
 
 import urllib2
 from bs4 import BeautifulSoup
@@ -47,19 +46,10 @@ elec_type_hash = {
 	'11': u"교육감선거"
 }
 
-elec_area_nm_postfix = u'가나다라마바사아자차카타파하'
-
-
 def get_htmldata( electioncode, citycode, sggcitycode, towncode, sggtowncode, noresult_keyword = "", local_only = False ):
 	
-	filename = "htmldata/" + electioncode + "_" + citycode
-	if sggcitycode != '-1':
-		filename += "_" + sggcitycode
-	if sggtowncode != '0':
-		filename += "_" + sggtowncode
-	filename += ".html"
+	filename = "htmldata/candidate_2014-06-04_" + electioncode + "_" + citycode + "_" + sggcitycode + "_" + towncode + "_" + sggtowncode + ".html"
 	#print filename
-	
 	if os.path.isfile( filename ):
 		f = open( filename, "r" )
 		data = f.read()
@@ -86,15 +76,48 @@ def get_htmldata( electioncode, citycode, sggcitycode, towncode, sggtowncode, no
 		
 	return data
 
+def find_max_elec_area_num( htmldata ):
+	html = BeautifulSoup( htmldata )
+	select_control = html.find( id='sggTownCode' )
+	if select_control != None:
+		option_list = select_control.find_all( 'option' )
+		elec_area_list = []
+		for o in option_list[1:]:
+			elec_cd = o['value']
+			elec_nm = o.contents[0]
+			#print elec_nm
+			elec_area_list.append( { 'elec_cd': elec_cd, 'elec_nm': elec_nm } )
+	else:
+		pass
+		#print "no such select"
+	return len( elec_area_list )
 
 def process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncode, sggtowncode, htmldata ):
-	
+
 	candidate_list = []
+	elec_area_list = []
+	return_object = { 'candidate_list': candidate_list, 'elec_nm': '', 'elec_area_list': elec_area_list }
+
 	html = BeautifulSoup( htmldata )
+	if elec_type in [ '5', '6' ]:
+		select_control = html.find( id='sggTownCode' )
+		if select_control != None:
+			option_list = select_control.find_all( 'option' )
+			for o in option_list[1:]:
+				elec_cd = o['value']
+				elec_nm = o.contents[0]
+				#print elec_nm
+				elec_area_list.append( { 'elec_cd': elec_cd, 'elec_nm': elec_nm } )
+		else:
+			pass
+			#print "no such select"
+				
+			
 	table = html.find( id='table01' )
 	if table == None:
-		return candidate_list
+		return return_object
 	else:
+		
 		tbody = table.tbody
 		for tr in tbody.find_all( 'tr' ):
 			td_list = tr.find_all( 'td' )
@@ -122,7 +145,7 @@ def process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncod
 				sex_idx = 5
 				birthday_idx = 6
 						
-			area_nm = td_list[area_idx].contents[0]
+			elec_area_nm = td_list[area_idx].contents[0]
 			if elec_type == '11':
 				party_nm = ""
 				candidate_num = ""
@@ -147,50 +170,28 @@ def process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncod
 				sex = 'F'
 			y, m, d = td_list[birthday_idx].contents[0].split( '/' )
 			birthdate= str( date( int( y ), int( m ), int( d ) ) )
-			#print area_nm, candidate_num, party_nm, name, sex, birthdate #unicode( hanja ), sex, birthdate
+			#print elec_area_nm, candidate_num, party_nm, name, sex, birthdate #unicode( hanja ), sex, birthdate
 			
 			candidate_data = [ party_nm, candidate_num, name, hanja, sex, birthdate ]
 			candidate_list.append( candidate_data )
 			continue
-			
-			try:
-				person_info.get( ( person_info.name == name ) & ( person_info.sex == sex ) & ( person_info.birthdate == birthdate ) )
-			except person_info.DoesNotExist:
-				#print "no such person", name, sex, birthdate
-				person = person_info()
-				person.name = name
-				person.birthdate = birthdate
-				person.sex = sex
-				person.hanja = hanja
-				#person.save()
-			
-			party_hash[party_nm] = 1
-			if party_nm != '':
-				try:
-					party_info.get( ( ( party_info.party_nm == party_nm ) | ( party_info.short_nm == party_nm ) ) & (party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date ) )
-				except party_info.DoesNotExist:
-					print "no such party", party_nm 
-					party = party_info()
-					party.party_nm = party_nm
-					party.valid_from = elec_date
-					party.valid_to = '9999-12-31'
-					#party.save()
-					#party_hash[party_nm] = [ elec_type, elec_date, citycode, sggcitycode, towncode, sggtowncode ]
-			
-		return candidate_list
-			#return
-			#ea = elec_area_info.get( 
-			
-			#try:
-			#	candidate_info.
+		return_object['elec_nm'] = elec_area_nm
+	return return_object
 
-def make_elec_area_cd( elec_type, nec_cd ):
-	if elec_type in [ '3', '8', '11' ] : # 광역시도 단위
-		return nec_cd + "00"
-	elif elec_type in [ '4', '9' ] : # 시군구 단위
-		return elec_type + nec_cd + "00"
-	elif elec_type in [ '5', '6' ]: #시군구 하위
-		return elec_type + nec_cd # + 1, 2 or 가, 나 선거구 (01, 02, ...)
+import argparse
+from argparse import RawTextHelpFormatter
+
+prog_desc = u'2014년 6월 4일 지방선거 후보자 및 선거구 정보 가져오기'
+parser = argparse.ArgumentParser(description=prog_desc, formatter_class=RawTextHelpFormatter)
+
+sido_help_msg = u'광역시/도 코드.\n11: 서울 21: 부산 22: 대구 23: 인천 24: 광주 25: 대전\n26: 울산 29: 세종시 31: 경기 32: 강원 33: 충북 34: 충남\n35: 전북 36: 전남 37: 경북 38: 경남 39: 제주'
+
+parser.add_argument('command', nargs='?', help='작업종류. C: Crawling, F: Formatting.')
+
+args = parser.parse_args()
+print args.command
+
+work_mode = args.command
 
 log_str = ""
 elec_date = "2014-06-04"
@@ -205,9 +206,19 @@ elec_type_list.sort()
 candidate_data_hash = {}
 candidate_data_hash[elec_date] = {}
 elec_area_hash = {}
-elec_area_hash[elec_date] = []
+elec_area_hash[elec_date] = {}
+
+
+local_only = True
+if work_mode == 'C':
+	local_only = False
+
+noresult_keyword = "검색된 결과가 없습니다."
+
 
 for elec_type in elec_type_list:
+	elec_area_hash[elec_date][elec_type] = []
+	candidate_data_hash[elec_date][elec_type] = {}
 	print "\nFormatting", elec_type, elec_type_hash[elec_type], "data:"
 	if elec_type in [ '3','8','11' ]:
 		sig_lvl = 1
@@ -218,21 +229,20 @@ for elec_type in elec_type_list:
 	if elec_type == '10':
 		area_list = []
 	else:
-		area_select = area_info.select().where( ( area_info.sig_lvl == sig_lvl ) & ( area_info.valid_from < elec_date ) & ( area_info.valid_to > elec_date ) & ( area_info.nec_cd != None ) )
+		if elec_type in [ '5', '6' ]:
+			area_select = area_info.select().where( ( area_info.sig_lvl == sig_lvl ) & ( area_info.valid_from < elec_date ) & ( area_info.valid_to > elec_date ) & ( area_info.nec_cd != None ) & ( area_info.spcity_cd != '1' ) )
+		else:
+			area_select = area_info.select().where( ( area_info.sig_lvl == sig_lvl ) & ( area_info.valid_from < elec_date ) & ( area_info.valid_to > elec_date ) & ( area_info.nec_cd != None ) & ( area_info.spcity_cd != '2' ) )
 		area_list = [ area for area in area_select ]
 		print "total", len( area_list ), "areas."
 
 	#print "a"
 
 	for area in area_list:
-
-		#print "b"
-
-		#print elec_type, area.id, area.sig_nm, area.sig_cd, eacd
-		#print elec_type, elec_type_hash[elec_type], area.sig_cd, area.sig_nm, elec_area_cd
-#31100 4110100 5110101 6110101 81100 9110100 10490101 111100
+		#if elec_type == '6' and area.nec_cd == '4302':
+			#print elec_type, area.sig_cd, area.sig_nm, area.nec_cd
 		if elec_type in [ '3', '4', '8', '9', '11' ]:
-			elec_area_cd = elec_type + area.nec_cd + '00'
+			elec_cd = elec_type + area.nec_cd + '00'
 		elif elec_type in [ '5', '6', '10' ]:
 			elec_area_prefix = elec_type + area.nec_cd
 		sggcitycode = '-1'
@@ -243,36 +253,63 @@ for elec_type in elec_type_list:
 		if elec_type in [ '4', '9' ]:
 			sggcitycode = elec_type + area.nec_cd + "00"
 
+		max_num = 30
 		if elec_type in [ '5', '6' ]:
 			towncode = area.nec_cd
 			sggtowncode = elec_type + area.nec_cd 
-			for i in range(1, 15):
+			min_num = 1
+			if elec_type == '6' and area.nec_cd == '4302':
+				min_num = 4
+			for i in range(min_num, max_num):
 				sggtowncode = elec_area_prefix + '{:02d}'.format( i )
-				elec_area_cd = sggtowncode
-				elec_area_nm = area.sig_nm + elec_area_nm_postfix[i-1]
+				elec_cd = sggtowncode
 				sys.stdout.write('.')
+						
 				#print elec_type, citycode, sggcitycode, towncode, sggtowncode
-				htmldata = get_htmldata( elec_type, citycode, sggcitycode, towncode, sggtowncode, noresult_keyword = "검색된 결과가 없습니다.", local_only = True )
+				htmldata = get_htmldata( elec_type, citycode, sggcitycode, towncode, sggtowncode, noresult_keyword = noresult_keyword, local_only = local_only)
 				if htmldata == "":
 					#print "no data for", elec_type, towncode, sggtowncode, i
 					#max_sgg_num[elec_type][towncode] = i - 1
 					break
+				if i == 1:
+					max_num = find_max_elec_area_num( htmldata )
 				
-				candidate_list = process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncode, sggtowncode, htmldata )
-				if len( candidate_list ) > 0:
-					candidate_data_hash[elec_date][elec_area_cd] = candidate_list
-					elec_area_hash[elec_date].append( { 'elec_cd': elec_area_cd, 'elec_nm': elec_area_nm, 'elec_lvl': elec_type } )
+				if work_mode == 'F':
+					result_hash = process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncode, sggtowncode, htmldata )
+					candidate_list = result_hash['candidate_list']
+					elec_area_list = result_hash['elec_area_list']
+					#print len( candidate_list ), len( elec_area_list )
+					elec_nm = result_hash['elec_nm']
+					#print elec_nm
+					if len( candidate_list ) > 0:
+						#print elec_cd, elec_nm
+						candidate_data_hash[elec_date][elec_type][elec_cd] = candidate_list
+						elec_area_hash[elec_date][elec_type].append( { 'elec_cd': elec_cd, 'elec_nm': elec_nm, 'elec_lvl': elec_type } )
+
+				if i == max_num:
+					break
+					#if len( elec_area_list ) > 0:	
+					#	if elec_area_list[-1]['elec_nm'] == elec_nm:
+					#		#print elec_nm
+					#		break
 				
 		else:
 			sys.stdout.write('.')
 			#print elec_type, citycode, sggcitycode, towncode, sggtowncode
-			htmldata = get_htmldata( elec_type, citycode, sggcitycode, towncode, sggtowncode, local_only = True )
-			candidate_list = process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncode, sggtowncode, htmldata )
-			elec_area_nm = area.sig_nm
-
-			if len( candidate_list ) > 0:
-				candidate_data_hash[elec_date][elec_area_cd] = candidate_list
-				elec_area_hash[elec_date].append( { 'elec_cd': elec_area_cd, 'elec_nm': elec_area_nm, 'elec_lvl': elec_type } )
+			htmldata = get_htmldata( elec_type, citycode, sggcitycode, towncode, sggtowncode, noresult_keyword = noresult_keyword, local_only = local_only )
+			if htmldata == "":
+				#print "no data for", elec_type, towncode, sggtowncode, i
+				#max_sgg_num[elec_type][towncode] = i - 1
+				continue
+			if work_mode == 'F':
+				result_hash = process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncode, sggtowncode, htmldata )
+				candidate_list = result_hash['candidate_list']
+				elec_nm = area.sig_nm
+	
+				if len( candidate_list ) > 0:
+					#print elec_cd, elec_nm
+					candidate_data_hash[elec_date][elec_type][elec_cd] = candidate_list
+					elec_area_hash[elec_date][elec_type].append( { 'elec_cd': elec_cd, 'elec_nm': elec_nm, 'elec_lvl': elec_type } )
 		#break
 
 		
@@ -280,16 +317,14 @@ for elec_type in elec_type_list:
 #for party in party_hash.keys():
 #	print "[", party, "]"
 #print max_sgg_num
-	
-candidate_data_json = json.dumps( candidate_data_hash, separators = (',', ':'), indent=4, sort_keys = True, encoding='utf-8', ensure_ascii=False )
+if work_mode == 'F':
+	candidate_data_json = json.dumps( candidate_data_hash, separators = (',', ':'), indent=4, sort_keys = True, encoding='utf-8', ensure_ascii=False )
+	f = codecs.open("candidate_info_2014-06-04.json", encoding='utf-8', mode='w')
+	f.write ( candidate_data_json )
+	f.close()
 
-f = codecs.open("candidate_info_2014-06-04.json", encoding='utf-8', mode='w')
-f.write ( candidate_data_json )
-f.close()
-
-elec_area_json = json.dumps( elec_area_hash, separators = (',', ':'), indent=4, sort_keys = True, encoding='utf-8', ensure_ascii=False )
-
-f = codecs.open("elec_area_2014-06-04.json", encoding='utf-8', mode='w')
-f.write ( elec_area_json )
-f.close()
+	elec_area_json = json.dumps( elec_area_hash, separators = (',', ':'), indent=4, sort_keys = True, encoding='utf-8', ensure_ascii=False )
+	f = codecs.open("elec_area_2014-06-04.json", encoding='utf-8', mode='w')
+	f.write ( elec_area_json )
+	f.close()
 

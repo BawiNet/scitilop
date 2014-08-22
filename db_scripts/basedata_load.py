@@ -179,6 +179,17 @@ def load_area_info_history( key, basedata_config ):
 						area.sig_cd = new_cd
 						area.sig_nm = change['sig_nm']
 						area.valid_to = "9999-12-31"
+						if 'spcity_cd' in change.keys(): # 특정시 처리
+							area.spcity_cd = change['spcity_cd']
+							if change['spcity_cd'] == '1':
+								#print new_cd, new_cd[:4]
+								#area_info.update( spcity_cd = '2' ).where( area_info.sig_cd.startswith( new_cd[:4] ) )
+								suba_select = area_info.select().where( ( area_info.sig_cd.startswith( new_cd[:4] ) ) & ( area_info.sig_lvl == '2' ) )
+								suba_list = [ suba for suba in suba_select ]
+								for suba in suba_list:
+									#print "suba", suba.sig_nm
+									suba.spcity_cd = '2'
+									suba.save()
 					else:
 						pass
 						#print "updating area_info that already exists", new_cd, change['sig_nm']
@@ -374,7 +385,7 @@ def load_missing_geojson( key, basedata_config ):
 			year = year - 1
 		else:
 			year = 2013
-		data = get_geojson_data( sig_cd, year, save = True )
+		data = get_geojson_data( sig_cd, year, save = True, local_only = True )
 		if len( data ) == 0:
 			#print "no data from SGIS", sig_cd, area.sig_nm, year
 			prev_list = [ a for a in area_info.select().where( area_info.next_area == area.id ) ]
@@ -424,19 +435,20 @@ def load_area_info_nec_cd( key, basedata_config ):
 		json_file.close()
 
 		for elec_date in nec_cd_hash.keys():
-			area_list = nec_cd_hash[elec_date]
-			for a in area_list:
+			area_data = nec_cd_hash[elec_date]
+			for sig_cd in area_data.keys():
+				a = area_data[sig_cd]
 				total_count += 1
 				sys.stdout.write('.')
 				try:	
 					area = area_info.get_area_by_cd( a['sig_cd'], elec_date )
 				except area_info.DoesNotExist:
 					error_count += 1
-					#print "no such area", a['sig_cd']
+					print "no such area", a['sig_cd']
 					continue
 				if a['sig_nm'] != area.sig_nm:
 					error_count += 1
-					#print "name does not match!", a['sig_cd'], a['sig_nm'], area.sig_nm
+					print "name does not match!", a['sig_cd'], a['sig_nm'], area.sig_nm
 					continue
 				area.nec_cd = a['nec_cd']
 				area.save()
@@ -619,7 +631,7 @@ def load_candidate_info( key, basedata_config ):
 					party_nm, cand_num, name, hanja, sex, birthdate = candidate_data
 					
 					try:
-						party = party_info.get( ( party_info.party_nm == party_nm ) & (party_info.valid_from < elec_date ) & ( party_info.valid_to > elec_date ) )
+						party = party_info.get( ( party_info.party_nm == party_nm ) & (party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date ) )
 					except party_info.DoesNotExist:
 						#print "adding new party", party_nm 
 						party = party_info()

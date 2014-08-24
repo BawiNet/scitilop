@@ -76,9 +76,13 @@ def get_htmldata( electioncode, citycode, sggcitycode, towncode, sggtowncode, no
 		
 	return data
 
-def find_max_elec_area_num( htmldata ):
+def find_max_elec_area_num( elec_type, htmldata ):
 	html = BeautifulSoup( htmldata )
-	select_control = html.find( id='sggTownCode' )
+	if elec_type in [ '5', '6' ]:
+		select_control = html.find( id='sggTownCode' )
+	elif elec_type == '10':
+		select_control = html.find( id='sggCityCode' )
+
 	if select_control != None:
 		option_list = select_control.find_all( 'option' )
 		elec_area_list = []
@@ -96,23 +100,9 @@ def process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncod
 
 	candidate_list = []
 	elec_area_list = []
-	return_object = { 'candidate_list': candidate_list, 'elec_nm': '', 'elec_area_list': elec_area_list }
+	return_object = { 'candidate_list': candidate_list, 'elec_nm': '' }
 
 	html = BeautifulSoup( htmldata )
-	if elec_type in [ '5', '6' ]:
-		select_control = html.find( id='sggTownCode' )
-		if select_control != None:
-			option_list = select_control.find_all( 'option' )
-			for o in option_list[1:]:
-				elec_cd = o['value']
-				elec_nm = o.contents[0]
-				#print elec_nm
-				elec_area_list.append( { 'elec_cd': elec_cd, 'elec_nm': elec_nm } )
-		else:
-			pass
-			#print "no such select"
-				
-			
 	table = html.find( id='table01' )
 	if table == None:
 		return return_object
@@ -121,7 +111,7 @@ def process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncod
 		tbody = table.tbody
 		for tr in tbody.find_all( 'tr' ):
 			td_list = tr.find_all( 'td' )
-			if elec_type == '11':
+			if elec_type in [ '10', '11' ]:
 				area_idx = 0
 				#candnum_idx = 2
 				#party_idx = 3
@@ -146,7 +136,7 @@ def process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncod
 				birthday_idx = 6
 						
 			elec_area_nm = td_list[area_idx].contents[0]
-			if elec_type == '11':
+			if elec_type in [ '10', '11' ]:
 				party_nm = ""
 				candidate_num = ""
 			else:
@@ -175,7 +165,7 @@ def process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncod
 			candidate_data = [ party_nm, candidate_num, name, hanja, sex, birthdate ]
 			candidate_list.append( candidate_data )
 			continue
-		return_object['elec_nm'] = elec_area_nm
+		return_object['elec_nm'] = elec_area_nm.replace( ' ', '' )
 	return return_object
 
 import argparse
@@ -193,6 +183,13 @@ print args.command
 
 work_mode = args.command
 
+if work_mode == 'C':
+	local_only = False
+	work_type = "Crawling"
+else:
+	work_type = "Formatting"
+	local_only = True
+
 log_str = ""
 elec_date = "2014-06-04"
 elec_type = "3"
@@ -209,25 +206,22 @@ elec_area_hash = {}
 elec_area_hash[elec_date] = {}
 
 
-local_only = True
-if work_mode == 'C':
-	local_only = False
-
 noresult_keyword = "검색된 결과가 없습니다."
 
 
 for elec_type in elec_type_list:
 	elec_area_hash[elec_date][elec_type] = []
 	candidate_data_hash[elec_date][elec_type] = {}
-	print "\nFormatting", elec_type, elec_type_hash[elec_type], "data:"
+	print "\n", work_type, elec_type, elec_type_hash[elec_type], "data:"
 	if elec_type in [ '3','8','11' ]:
 		sig_lvl = 1
 	else:
 		sig_lvl = 2
 
 	area_list = []
-	if elec_type == '10':
-		area_list = []
+	if elec_type == '10': #교육의원. 제주특별자치도 제주시 1, 2, 3 서귀포시 4, 5 선거구. 
+		area = area_info.get_area_by_cd( '39', elec_date )
+		area_list = [ suba for suba in area.children ]
 	else:
 		if elec_type in [ '5', '6' ]:
 			area_select = area_info.select().where( ( area_info.sig_lvl == sig_lvl ) & ( area_info.valid_from < elec_date ) & ( area_info.valid_to > elec_date ) & ( area_info.nec_cd != None ) & ( area_info.spcity_cd != '1' ) )
@@ -254,15 +248,22 @@ for elec_type in elec_type_list:
 			sggcitycode = elec_type + area.nec_cd + "00"
 
 		max_num = 30
-		if elec_type in [ '5', '6' ]:
-			towncode = area.nec_cd
-			sggtowncode = elec_type + area.nec_cd 
+		if elec_type in [ '5', '6', '10' ]:
+
+			if elec_type in ['5','6']:
+				towncode = area.nec_cd
+
 			min_num = 1
-			if elec_type == '6' and area.nec_cd == '4302':
+			if elec_type == '6' and area.nec_cd == '4302': #청주시 흥덕구 기초의회 선거구 코드는 1 이 아니라 4 에서부터 시작함.. 일종의 코드부여 버그 
 				min_num = 4
 			for i in range(min_num, max_num):
-				sggtowncode = elec_area_prefix + '{:02d}'.format( i )
-				elec_cd = sggtowncode
+				if elec_type in ['5','6']:
+					sggtowncode = elec_area_prefix + '{:02d}'.format( i )
+					elec_cd = sggtowncode
+				elif elec_type == '10':
+					sggcitycode = elec_area_prefix + '{:02d}'.format( i )
+					elec_cd = sggcitycode
+					
 				sys.stdout.write('.')
 						
 				#print elec_type, citycode, sggcitycode, towncode, sggtowncode
@@ -272,12 +273,11 @@ for elec_type in elec_type_list:
 					#max_sgg_num[elec_type][towncode] = i - 1
 					break
 				if i == 1:
-					max_num = find_max_elec_area_num( htmldata )
+					max_num = find_max_elec_area_num( elec_type, htmldata )
 				
 				if work_mode == 'F':
 					result_hash = process_candidate_html( elec_type, elec_date, citycode, sggcitycode, towncode, sggtowncode, htmldata )
 					candidate_list = result_hash['candidate_list']
-					elec_area_list = result_hash['elec_area_list']
 					#print len( candidate_list ), len( elec_area_list )
 					elec_nm = result_hash['elec_nm']
 					#print elec_nm

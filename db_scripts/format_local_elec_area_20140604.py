@@ -26,7 +26,7 @@ url_template = 'http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?ele
 elec_type_hash = {
 	'5': u"시·도의회의원선거",
 	'6': u"구·시·군의회의원선거",
-#	'10': u"교육의원선거",
+	'10': u"교육의원선거",
 }
 
 
@@ -68,11 +68,34 @@ def get_htmldata( electioncode, citycode, noresult_keyword = "", local_only = Fa
 		
 	return data
 
+
+import argparse
+from argparse import RawTextHelpFormatter
+
+prog_desc = u'2014년 6월 4일 지방선거 후보자 및 선거구 정보 가져오기'
+parser = argparse.ArgumentParser(description=prog_desc, formatter_class=RawTextHelpFormatter)
+parser.add_argument('command', nargs='?', help='작업종류. C: Crawling, F: Formatting.')
+args = parser.parse_args()
+print args.command
+
+work_mode = args.command
+
+if work_mode == 'C':
+	local_only = False
+	work_type = "Crawling"
+else:
+	work_type = "Formatting"
+	local_only = True
+
+
 log_str = ""
 elec_date = "2014-06-04"
 
 #print elec_type, elec_type_hash[elec_type]
 filename = 'elec_area_' + elec_date + '.json'
+
+
+local_only = False
 
 json_file = open( filename, 'r' )
 elec_area_data_hash = json.load( json_file )
@@ -97,7 +120,7 @@ for elec_type in elec_type_list:
 	for sido in sido_list:
 		citycode = sido.nec_cd[0:2] + '00'
 		print sido.sig_nm, elec_type, citycode
-		htmldata = get_htmldata( elec_type, citycode, noresult_keyword = "검색된 결과가 없습니다.", local_only = True  )
+		htmldata = get_htmldata( elec_type, citycode, noresult_keyword = "검색된 결과가 없습니다.", local_only = local_only )
 		html = BeautifulSoup( htmldata )
 		table = html.find( id='table01' )
 		if table == None:
@@ -111,7 +134,7 @@ for elec_type in elec_type_list:
 				emd_nm_idx = 2
 				elect_num_idx = 3
 				sig_nm = td_list[sig_nm_idx].contents[0].strip()
-				elec_nm = td_list[elec_nm_idx].contents[0].strip()
+				elec_nm = td_list[elec_nm_idx].contents[0].strip().replace( ' ', '' )
 				emd_nm = td_list[emd_nm_idx].contents[0].strip()
 				emd_list = [ emd.strip() for emd in emd_nm.split( "," ) ]
 				elect_num = td_list[elect_num_idx].contents[0].strip()
@@ -126,6 +149,8 @@ for elec_type in elec_type_list:
 
 				suba_list = []					
 				for emd in emd_list:
+					if elec_type == '10':
+						print emd
 					try:
 						if emd in [ u'서둔동', u'상현2동', u'쌍용2동' ]:
 							suba = area_info.search_by_name( emd, elec_date, sig_lvl = '3' )
@@ -136,17 +161,25 @@ for elec_type in elec_type_list:
 						error_count += 1
 						continue
 					suba_list.append( suba )
+					if elec_type == '10':
+						print len( suba_list )
 
 				for elec_area in elec_area_data_hash[elec_date][elec_type]:
-					if elec_area['elec_nm'] == elec_nm and elec_area['elec_lvl'] == elec_type and elec_area['elec_cd'][1:3] == sido.nec_cd[:2]:
+					if elec_type == '10':
+						print elec_area['elec_nm'], elec_nm
+					if elec_area['elec_nm'] == elec_nm and elec_area['elec_lvl'] == elec_type and elec_area['elec_cd'][len(elec_type):len(elec_type)+2] == sido.nec_cd[:2]:
 						elec_area['elect_num'] = int( elect_num )
 						suba_data_list = []
 						for suba in suba_list:
+							if elec_type == '10':
+								print suba.sig_nm
 							suba_data = { 'sig_cd': suba.sig_cd, 'sig_nm': suba.sig_nm }
 							suba_data_list.append( suba_data )
 						elec_area['area_list'] = suba_data_list
-						#print elec_area['elec_cd'], elec_nm, elec_type
-				#print sig_nm, elec_nm, emd_list, elec_num
+						print elec_area['elec_cd'], elec_nm, elec_type
+						break
+				if elec_type == '10':
+					print sig_nm, elec_nm, emd_list, elect_num, len( elec_area['area_list'] )
 		
 		#break
 			

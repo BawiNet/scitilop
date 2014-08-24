@@ -51,6 +51,7 @@ class area_info( data_model ):
 	sig_lvl = CharField()
 	sig_cd = CharField()
 	sig_nm = CharField()
+	short_nm = CharField( null = True ) # 특정시 구의 경우 구이름만. 세종특별자치시의 경우 세종시. 
 	nec_cd = CharField( null = True )
 	spcity_cd = CharField( default = '0' ) #특정시 여부. '0': 특정시 아님 '1': 특정시 '2': 특정시에 속한 구
 	valid_from = DateField( null = True )

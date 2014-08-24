@@ -22,7 +22,7 @@ def load_elec_area_data( filename ):
 	error_count = 0
 	success_count = 0
 	total_count = 0
-	#print "loading", key
+	#print "loading", filename
 
 	json_file = open( filename, 'r' )
 	elec_area_data = json.load( json_file )
@@ -75,7 +75,8 @@ def load_elec_area_data( filename ):
 				else:
 					pass
 				
-				if elec_lvl in [ '5', '6' ]:
+				if 'area_list' in elec_area.keys():
+				#if elec_lvl in [ '5', '6' ]:
 					area_list = elec_area['area_list']
 					for area in area_list:
 						total_count += 1
@@ -117,7 +118,7 @@ def load_elec_area_data( filename ):
 						print "no such area", elec_area['elec_nm'], "with nec_cd", nec_cd
 						error_count += 1
 						continue
-	
+						
 					try:
 						earel = elec_area_relation.get( ( elec_area_relation.area_info == a.id ) & ( elec_area_relation.elec_area_info == ea.id ) )
 					except elec_area_relation.DoesNotExist:

@@ -110,6 +110,7 @@ def load_area_info( key, basedata_config ):
 		location = basedata_config['area_info']['location']
 		#print location
 		for dirname, dirnames, filenames in os.walk( location ):
+			filenames.sort()
 			for filename in filenames:
 				sys.stdout.write('.')
 				elems = filename.split( "." )

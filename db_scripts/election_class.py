@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import mysql.connector
+#import mysql.connector
 import sqlite3
 from peewee import *
 import sys

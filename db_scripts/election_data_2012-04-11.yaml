@@ -1,0 +1,4 @@
+elec_area_info: { type: file, location: elec_area_2012-04-11.json }
+candidate_info: { type: file, location: candidate_info_2012-04-11.json }
+election_result: { type: file, location: election_result_2012-04-11.json }
+#election_result_detail: { type: file, location: election_result_detail_2012-04-11.json }

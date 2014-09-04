@@ -183,7 +183,7 @@ for dirname, dirnames, filenames in os.walk( location ):
 			if datatype == 'main':
 #서울특별시	강남구갑	논현1동	논현1동제3투	무소속	권헌성	24
 				try:
-					party = party_info.get( ( party_info.party_nm == party_nm ) & ( party_info.valid_from < elec_date ) & ( party_info.valid_to > elec_date ) )
+					party = party_info.get( ( party_info.party_nm == party_nm ) & ( party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date ) )
 				except party_info.DoesNotExist:
 					print "no such party", party_nm
 					party = party_info()

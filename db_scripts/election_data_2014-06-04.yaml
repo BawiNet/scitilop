@@ -1,0 +1,4 @@
+elec_area_info: { type: file, location: elec_area_2014-06-04.json }
+candidate_info: { type: file, location: candidate_info_2014-06-04.json }
+#election_result: { type: file, location: election_result_2014-06-04.json }
+#election_result_detail: { type: file, location: election_result_detail_2014-06-04.json }

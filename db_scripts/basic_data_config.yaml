@@ -1,0 +1,5 @@
+area_info: { type: dir, location: ../kostat.go.kr/geojson_WGS84 }
+area_info_history: { type: file, location: area_info_history.json }
+area_info_nec_cd: { type: file, location: area_info_nec_cd.json }
+election_info: { type: file, location: election_info.json }
+party_info: { type: file, location: party_info.json }

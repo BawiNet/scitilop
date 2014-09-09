@@ -316,9 +316,10 @@ class candidate_info( data_model ):
 	id = PrimaryKeyField()
 	candidate_num = CharField()
 	election_info = ForeignKeyField( election_info )
-	elec_area_info = ForeignKeyField( elec_area_info )
+	elec_area_info = ForeignKeyField( elec_area_info, related_name = 'candidates' )
 	person_info = ForeignKeyField( person_info )
-	party_info = ForeignKeyField( party_info )
+	party_info = ForeignKeyField( party_info, null = True )
+	elected = BooleanField( default = False )
 
 class counting_info( data_model ):
 	id = PrimaryKeyField()
@@ -336,7 +337,7 @@ class counting_info( data_model ):
 class election_result( data_model ):
 	id = PrimaryKeyField()
 	counting_info = ForeignKeyField( counting_info )
-	candidate_info = ForeignKeyField( candidate_info )
+	candidate_info = ForeignKeyField( candidate_info, null = True )
+	party_info = ForeignKeyField( party_info, null = True )
 	vote_count = IntegerField( default = 0 )
 	vote_percent = FloatField( default = 0 )
-	elected = BooleanField( default = False )

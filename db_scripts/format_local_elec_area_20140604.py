@@ -5,7 +5,6 @@ import gzip
 import json
 import os
 import sys
-import mysql.connector
 from datetime import date, datetime, timedelta
 from peewee import *
 import string

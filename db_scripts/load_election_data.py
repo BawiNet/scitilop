@@ -182,19 +182,23 @@ def load_candidate_info( key, config):
 					total_count += 1
 					sys.stdout.write('.')
 					party_nm, cand_num, name, hanja, sex, birthdate = candidate_data
-					
-					try:
-						party = party_info.get( ( party_info.party_nm == party_nm ) & (party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date ) )
-					except party_info.DoesNotExist:
-						#print "adding new party", party_nm 
-						party = party_info()
-						party.party_nm = party_nm
-						party.valid_from = elec_date[:4] + "-01-01"
-						party.valid_to = "9999-12-31"
-						party.save()
+
+					if party_nm != "":
+						try:
+							party = party_info.get( ( party_info.party_nm == party_nm ) & (party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date ) )
+						except party_info.DoesNotExist:
+							#print "adding new party", party_nm
+							party = party_info()
+							party.party_nm = party_nm
+							party.valid_from = elec_date[:4] + "-01-01"
+							party.valid_to = "9999-12-31"
+							party.save()
+						else:
+							pass
+						party_id = party.id
 					else:
-						pass
-					
+						party_id = None
+
 					try:
 						person = person_info.get( ( person_info.name == name ) & (person_info.sex == sex ) & ( person_info.birthdate == birthdate ) )
 					except person_info.DoesNotExist:
@@ -212,14 +216,14 @@ def load_candidate_info( key, config):
 					try:
 						candidate = candidate_info.get(	( candidate_info.election_info == election.id ) & 
 																			( candidate_info.elec_area_info == elec_area.id ) &
-																			( candidate_info.party_info == party.id ) &
+																			( candidate_info.party_info == party_id ) &
 																			( candidate_info.person_info == person.id ) )
 					except candidate_info.DoesNotExist:
 						#print "adding candidate", election.elec_date, elec_area.elec_nm, party.party_nm, person.name
 						candidate = candidate_info()
 						candidate.election_info = election.id
 						candidate.elec_area_info = elec_area.id
-						candidate.party_info = party.id
+						candidate.party_info = party_id
 						candidate.person_info = person.id
 						candidate.candidate_num = cand_num
 						candidate.save()
@@ -294,7 +298,7 @@ def load_election_result( key, config ):
 
 					candidate_list = [ c for c in candidate_info.select().where( ( candidate_info.election_info == elec.id ) &
 																												( candidate_info.elec_area_info == elec_area.id ) ) ]
-
+					eresult_list = []
 					# 정당 및 후보자 정보 없으면 오류.
 					for vote_result in vote_result_list:
 						total_count += 1
@@ -302,42 +306,118 @@ def load_election_result( key, config ):
 						candidate_num, party_nm, candidate_nm, sex, vote_count, vote_percent = vote_result
 						#print "  ",party_nm, candidate_nm
 
-						candidate = candidate_info()
-						candidate_found = False
-						# 후보자 정보 찾기
-						for c in candidate_list:
-							#print c.party_info.party_nm, party_nm, c.person_info.name, candidate_nm #, c.candidate_num, type( c.candidate_num ), candidate_num, type( candidate_num )
-							if c.party_info.party_nm == party_nm and c.person_info.name == candidate_nm:# and c.candidate_num == candidate_num:
-								# 찾았음
-								candidate = c
-								candidate_found = True
-								break
-						if candidate_found == False:
-							error_count += 1
-							print "cannot find candidate", elec.elec_date, elec_area.elec_nm, candidate_num, party_nm, candidate_nm, sex
-							continue
+						if candidate_nm != '':
 
+							candidate = candidate_info()
+							candidate_found = False
+							# 후보자 정보 찾기
+							for c in candidate_list:
+								#print c.party_info.party_nm, party_nm, c.person_info.name, candidate_nm #, c.candidate_num, type( c.candidate_num ), candidate_num, type( candidate_num )
+								if c.person_info.name == candidate_nm and ( c.party_info == None or ( c.party_info != None and c.party_info.party_nm == party_nm ) ):# and c.candidate_num == candidate_num:
+									# 찾았음
+									candidate = c
+									candidate_found = True
+									break
+							if candidate_found == False:
+								error_count += 1
+								print "cannot find candidate", elec.elec_date, elec_area.elec_nm, candidate_num, party_nm, candidate_nm, sex
+								continue
+							party_id = None
+							candidate_id = candidate.id
+						else: #비례대표일 경우
+							try:
+								party = party_info.get( (party_info.party_nm == party_nm) & ( party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date ))
+							except party_info.DoesNotExist:
+								print "cannot find party", elec.elec_date, elec_area.elec_nm, candidate_num, party_nm
+							party_id = party.id
+							candidate_id = None
 						try:
-							eresult = election_result.get( ( election_result.counting_info == counting.id ) & (election_result.candidate_info == candidate.id ) )
+							eresult = election_result.get( ( election_result.counting_info == counting.id ) & (election_result.candidate_info == candidate_id ) & (election_result.party_info == party_id )  )
 						except election_result.DoesNotExist:
 							#print "adding result", elec.elec_title, elec_area.elec_nm, candidate.person_info.name, vote_count, vote_percent
 							eresult = election_result()
 							eresult.counting_info = counting.id
-							eresult.candidate_info = candidate.id
+							eresult.candidate_info = candidate_id
+							eresult.party_info = party_id
 							eresult.vote_count = vote_count
 							eresult.vote_percent = vote_percent
 							eresult.save()
 							success_count += 1
+						eresult_list.append( eresult )
+					#for r in eresult_list:
+					#	print r.vote_count
+					eresult_list.sort( key=lambda x:x.vote_count, reverse = True)
+					#for r in eresult_list:
+					#	print r.vote_count
+					if elec_type in [ '8', '9' ]:
 
-							# 당선자 세팅
-							if max_vote < vote_count:
-								max_vote = vote_count
-								max_vote_result_id = eresult.id
+						pass
+					else:
+						for i in range( elec_area.elect_num ):
+							eresult = eresult_list[i]
+							candidate = eresult.candidate_info
+							candidate.elected = True
+							candidate.save()
 
-					if max_vote_result_id > 0:
-						eresult = election_result.get( election_result.id == max_vote_result_id )
-						eresult.elected = True
-						eresult.save()
+
+
+	return [ error_count, success_count, total_count ]
+
+def load_elected_data( key, config ):
+	error_count = 0
+	success_count = 0
+	total_count = 0
+	pass_count = 0
+	#print "loading", key
+	info_type = config[key]['type']
+	if info_type == 'file':
+		filename = config[key]['location']
+		#print filename
+		json_file = open( filename, 'r' )
+		json_data = json_file.read()
+		elected_data_hash = json.loads( json_data )
+		json_file.close()
+
+		for elec_date in elected_data_hash.keys():
+			try:
+				elec = election_info.get( election_info.elec_date == elec_date )
+			except election_info.DoesNotExist:
+				print "no such election!"
+				continue
+
+			elec_type_list = elected_data_hash[elec_date].keys()
+			elec_type_list.sort()
+
+			for elec_type in elec_type_list:
+				print elec_type
+				#print elec.elec_title, elec.elec_date
+				for elec_area_cd in elected_data_hash[elec_date][elec_type].keys():
+
+					try:
+						elec_area = elec_area_info.get( elec_area_info.elec_cd == elec_area_cd )
+
+					except elec_area_info.DoesNotExist:
+						print "no such elec_area!"
+						continue
+					#print elec_area.elec_nm
+
+					elected_list = elected_data_hash[elec_date][elec_type][elec_area_cd]['elected_list']
+					candidate_list = elec_area.candidates
+
+					for elected in elected_list:
+						total_count += 1
+						found = False
+						for candidate in candidate_list:
+							#print candidate.person_info.name, elected['name'], candidate.person_info.birthdate, elected['birthdate']
+							if candidate.person_info.name == elected['name'] and str(candidate.person_info.birthdate) == elected['birthdate']:
+								found = True
+								success_count += 1
+								candidate.elected = True
+								candidate.save()
+						if found == False:
+							error_count += 1
+							print "cannot find candidate", elec_area.elec_cd, elec_area.elec_cd, elected['name'], elected['birthdate']
+
 	return [ error_count, success_count, total_count ]
 
 ''' 선거 상세 결과 입력 '''
@@ -380,7 +460,7 @@ if os.path.isfile( config_filename  ):
 	election_data_config = yaml.load(f)
 	f.close()
 
-key_list = [ 'elec_area_info', 'candidate_info', 'election_result', 'election_result_detail' ]
+key_list = [ 'elec_area_info', 'candidate_info', 'election_result', 'elected_data', 'election_result_detail' ]
 
 for key in key_list:
 	if key not in election_data_config.keys():
@@ -395,6 +475,8 @@ for key in key_list:
 		error_count, success_count, total_count = load_candidate_info( key, election_data_config )
 	elif key == 'election_result':
 		error_count, success_count, total_count = load_election_result( key, election_data_config )
+	elif key == 'elected_data':
+		error_count, success_count, total_count = load_elected_data( key, election_data_config )
 	elif key == 'election_result_detail':
 		error_count, success_count, total_count = load_election_result_detail( key, election_data_config )
 	print "\nFinished loading", key, "data.\nError count:", error_count, "success count:", success_count, "total_count", total_count, "\n"

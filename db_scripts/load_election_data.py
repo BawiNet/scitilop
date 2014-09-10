@@ -3,10 +3,6 @@
 
 import json
 import os
-import sys
-from datetime import date, datetime, timedelta
-from peewee import *
-import string
 
 from election_class import *
 
@@ -109,6 +105,7 @@ def load_elec_area_info( key, config ):
 							#print "already there", ea.elec_nm, a.sig_nm
 							pass
 				else:
+					nec_cd_len = 0
 					if elec_lvl in [ '3', '8', '11' ]:
 						nec_cd_len = 2
 					elif elec_lvl in [ '4', '9' ]:
@@ -116,7 +113,9 @@ def load_elec_area_info( key, config ):
 						
 					nec_cd = elec_area['elec_cd'][len(elec_lvl):nec_cd_len+len(elec_lvl)]
 					try:
-						a = area_info.get( ( area_info.nec_cd == nec_cd ) & ( area_info.valid_from <= elec_date ) & ( area_info.valid_to >= elec_date ) )
+						a = area_info.get((area_info.nec_cd == nec_cd) &
+															(area_info.valid_from <= elec_date) &
+															(area_info.valid_to >= elec_date))
 					except area_info.DoesNotExist:
 						print "no such area", elec_area['elec_nm'], "with nec_cd", nec_cd
 						error_count += 1
@@ -284,16 +283,13 @@ def load_election_result( key, config ):
 						counting.election_info = elec.id
 						counting.elec_area_info = elec_area.id
 						counting.counting_percent = 100.0
-						counting.eligible_count = vote_result[0]
-						counting.vote_count = vote_result[1]
-						counting.invalid_count = vote_result[2]
-						counting.abstention_count = vote_result[3]
+						counting.eligible_count = vote_result['eligible_count']
+						counting.vote_count = vote_result['vote_count']
+						counting.invalid_count = vote_result['invalid_count']
+						counting.abstention_count = vote_result['abstention_count']
 
 						counting.save()
-						#print counting.election_info.elec_title, counting.elec_area_info.elec_nm, counting.counting_percent
 
-					max_vote = 0
-					max_vote_result_id = -1
 					vote_result_list = result_data_hash[elec_date][elec_type][elec_area_cd]['candidate_result']
 
 					candidate_list = [ c for c in candidate_info.select().where( ( candidate_info.election_info == elec.id ) &
@@ -303,17 +299,23 @@ def load_election_result( key, config ):
 					for vote_result in vote_result_list:
 						total_count += 1
 						sys.stdout.write('.')
-						candidate_num, party_nm, candidate_nm, sex, vote_count, vote_percent = vote_result
+						candidate_num = vote_result['candidate_num']
+						candidate_nm = vote_result['person_nm']
+						party_nm = vote_result['party_nm']
+						sex = vote_result['sex']
+						vote_count = vote_result['vote_count']
+						vote_percent = vote_result['vote_percent']
 						#print "  ",party_nm, candidate_nm
-
+						party = party_info()
+						party_id = None
 						if candidate_nm != '':
 
 							candidate = candidate_info()
 							candidate_found = False
 							# 후보자 정보 찾기
 							for c in candidate_list:
-								#print c.party_info.party_nm, party_nm, c.person_info.name, candidate_nm #, c.candidate_num, type( c.candidate_num ), candidate_num, type( candidate_num )
-								if c.person_info.name == candidate_nm and ( c.party_info == None or ( c.party_info != None and c.party_info.party_nm == party_nm ) ):# and c.candidate_num == candidate_num:
+								if c.person_info.name == candidate_nm and \
+										( c.party_info == None or ( c.party_info != None and c.party_info.party_nm == party_nm ) ):
 									# 찾았음
 									candidate = c
 									candidate_found = True
@@ -325,8 +327,11 @@ def load_election_result( key, config ):
 							party_id = None
 							candidate_id = candidate.id
 						else: #비례대표일 경우
+
 							try:
-								party = party_info.get( (party_info.party_nm == party_nm) & ( party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date ))
+								party = party_info.get((party_info.party_nm == party_nm) &
+																				(party_info.valid_from <= elec_date) &
+																				(party_info.valid_to >= elec_date))
 							except party_info.DoesNotExist:
 								print "cannot find party", elec.elec_date, elec_area.elec_nm, candidate_num, party_nm
 							party_id = party.id

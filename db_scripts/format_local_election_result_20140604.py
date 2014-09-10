@@ -1,23 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import gzip
 import json
 import os
-import sys
-from datetime import date, datetime, timedelta
-from peewee import *
-import string
 import time
 import codecs
 import os.path
 from election_class import *
-
-import yaml
-import os.path
-data_filename = "./elec_area_code_20120411.txt"
-
-
 import urllib2
 from bs4 import BeautifulSoup
 
@@ -90,7 +79,7 @@ def process_result_html( elec_type, elec_date, citycode, sggcitycode, towncode, 
 	html = BeautifulSoup( htmldata )
 	table = html.find( id='table01' )
 	if table == None:
-		return return_object
+		return result_hash
 	else:
 		tbody = table.tbody
 		ea = None
@@ -169,11 +158,11 @@ def process_result_html( elec_type, elec_date, citycode, sggcitycode, towncode, 
 						print "no such elec area", elec_cd
 
 			if not ea.elec_cd in result_hash.keys():
-				result_hash[ea.elec_cd] = { 'candidate_result': [], 'vote_result': [0,0,0,0] }
+				result_hash[ea.elec_cd] = { 'candidate_result': [], 'vote_result': {} }
 
 			print ea.elec_cd, ea.elec_nm
 			for cand in candidate_list:
-				print cand
+				#print cand
 				st = cand.find( 'strong' )
 				if st == None:
 					break
@@ -207,52 +196,55 @@ def process_result_html( elec_type, elec_date, citycode, sggcitycode, towncode, 
 					candidate = c_list[0]
 				else:
 					print election.elec_title, ea.elec_nm, party_nm, person_nm, "candidate_select", len( c_list), c_list
-
-				result_hash[ea.elec_cd]['candidate_result'].append( [ candidate.candidate_num, party_nm, person_nm, candidate.person_info.sex ] )
+				c_hash = { 'candidate_num': candidate.candidate_num, 'party_nm': party_nm, 'person_nm': person_nm, 'sex': candidate.person_info.sex }
+				#result_hash[ea.elec_cd]['candidate_result'].append( [ candidate.candidate_num, party_nm, person_nm, candidate.person_info.sex ] )
+				result_hash[ea.elec_cd]['candidate_result'].append( c_hash )
 
 			for part in party_list:
 				st = part.find( 'strong' )
 				if st != None and len( st.contents ) > 0:
 					party_nm = st.contents[0]
-					if party_nm not in [ p[1] for p in result_hash[ea.elec_cd]['candidate_result'] ]:
+					if party_nm not in [ p['party_nm'] for p in result_hash[ea.elec_cd]['candidate_result'] ]:
 						try:
 							party = party_info.get( ( party_info.party_nm == party_nm.encode( 'utf-8' ) ) & ( party_info.valid_from <= elec_date ) & ( party_info.valid_to >= elec_date) )
 						except party_info.DoesNotExist:
 							print "no such party", party_nm
-						result_hash[ea.elec_cd]['candidate_result'].append( [ "", party_nm, "", "" ] )
-			print result_hash[ea.elec_cd]['candidate_result']
-			print result_list
+						party_hash = { 'candidate_num': "", 'party_nm': party_nm, 'person_nm': "", 'sex': ""}
+						#result_hash[ea.elec_cd]['candidate_result'].append( [ "", party_nm, "", "" ] )
+						result_hash[ea.elec_cd]['candidate_result'].append( party_hash )
+			#print result_hash[ea.elec_cd]['candidate_result']
+			#print result_list
 			if len( result_list ) > 0:
-				print result_list[0]
-				print result_list[1]
-				print result_list[2]
+				#print result_list[0]
+				#print result_list[1]
+				#print result_list[2]
 				total_num = int( result_list[0].contents[0].replace( ',', '' ) )
 				vote_sum = int( result_list[1].contents[0].replace( ',', '' ) )
 				num_candidate = len( result_hash[ea.elec_cd]['candidate_result'] )
 				for i in xrange( num_candidate ):
-					print i, num_candidate
+					#print i, num_candidate
 					vote_count = int( result_list[2+i].contents[0].replace( ',', '' ) )
 					vote_percent = float( result_list[2+i].contents[2].replace( ',', '' ).replace('(','').replace(')','') )
-					if len( result_hash[ea.elec_cd]['candidate_result'][i] ) == 4:
-						result_hash[ea.elec_cd]['candidate_result'][i].append( vote_count )
-						result_hash[ea.elec_cd]['candidate_result'][i].append( vote_percent )
+					if 'vote_count' in result_hash[ea.elec_cd]['candidate_result'][i].keys():
+						result_hash[ea.elec_cd]['candidate_result'][i]['vote_count'] += vote_count
+						result_hash[ea.elec_cd]['candidate_result'][i]['vote_percent'] = 0
 					else:
-						result_hash[ea.elec_cd]['candidate_result'][i][4]+= vote_count
-						result_hash[ea.elec_cd]['candidate_result'][i][5] = 0
+						result_hash[ea.elec_cd]['candidate_result'][i]['vote_count'] = vote_count
+						result_hash[ea.elec_cd]['candidate_result'][i]['vote_percent'] = vote_percent
 					#vote_sum = int( td_list[3].contents[0] )
 				invalid_count = int( result_list[-3].contents[0].replace( ',', '' ) )
 				abstention_count = int( result_list[-2].contents[0].replace( ',', '' ) )
-				result_hash[ea.elec_cd]['vote_result'][0] += total_num
-				result_hash[ea.elec_cd]['vote_result'][1] += vote_sum
-				result_hash[ea.elec_cd]['vote_result'][2] += invalid_count
-				result_hash[ea.elec_cd]['vote_result'][3] += abstention_count
+				result_hash[ea.elec_cd]['vote_result']['eligible_count'] = total_num
+				result_hash[ea.elec_cd]['vote_result']['vote_count'] = vote_sum
+				result_hash[ea.elec_cd]['vote_result']['invalid_count'] = invalid_count
+				result_hash[ea.elec_cd]['vote_result']['abstention_count'] = abstention_count
 
 		#return_object['elec_nm'] = elec_area_nm.replace( ' ', '' )
 	for elec_cd in result_hash.keys():
 		for c in result_hash[elec_cd]['candidate_result']:
-			print c
-			if c[5] == 0:
-				c[5] = ( round( ( float( c[4] ) / float( result_hash[elec_cd]['vote_result'][1] - result_hash[elec_cd]['vote_result'][2] ) ) * 10000 ) ) / 100
+			#print c
+			if c['vote_percent'] == 0:
+				c['vote_percent'] = ( round( ( float( c['vote_count'] ) / float( result_hash[elec_cd]['vote_result']['vote_count'] - result_hash[elec_cd]['vote_result']['invalid_count'] ) ) * 10000 ) ) / 100
 	return result_hash
 
 import argparse

@@ -36,27 +36,27 @@ mapdate = args.date
 lv1_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.sig_lvl == '1' ) )
 area1_list = [ area for area in lv1_areas ]
 for area1 in area1_list:
-	print area1.sig_cd, area1.sig_nm, area1.valid_from, area1.valid_to
+    print area1.sig_cd, area1.sig_nm, area1.valid_from, area1.valid_to
 area2_list = [] 
 area3_list = []
 
 
 
 if len( args.sido_cd ) > 0:
-	for sido_cd in args.sido_cd:
-		lv1_area = area_info.get_area_by_cd( sido_cd, mapdate )
-		print lv1_area.sig_cd, lv1_area.sig_nm, lv1_area.id
-		lv2_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.parent_area == lv1_area.id ) )	
-		lv3_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.parent_area << [ area.id for area in lv2_areas ] ) )	
-		for area in lv2_areas:
-			print area.sig_cd, area.sig_nm
-		#area2_list = [ area for area in lv2_areas ]
-		area3_list.extend( [ area for area in lv3_areas ] )
-		print len( area2_list ), "lv2 areas"
-		print len( area3_list ), "lv3 areas"
+    for sido_cd in args.sido_cd:
+        lv1_area = area_info.get_area_by_cd( sido_cd, mapdate )
+        print lv1_area.sig_cd, lv1_area.sig_nm, lv1_area.id
+        lv2_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.parent_area == lv1_area.id ) )
+        lv3_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.parent_area << [ area.id for area in lv2_areas ] ) )
+        for area in lv2_areas:
+            print area.sig_cd, area.sig_nm
+        #area2_list = [ area for area in lv2_areas ]
+        area3_list.extend( [ area for area in lv3_areas ] )
+        print len( area2_list ), "lv2 areas"
+        print len( area3_list ), "lv3 areas"
 else:
-	lv2_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.sig_lvl == '2' ) )
-	area2_list = [ area for area in lv2_areas ]
+    lv2_areas = area_info.select().where( ( area_info.valid_from < mapdate ) & ( area_info.valid_to > mapdate ) & ( area_info.sig_lvl == '2' ) )
+    area2_list = [ area for area in lv2_areas ]
 
 features = []
 # merge geoJSON
@@ -67,20 +67,20 @@ all_area_list.extend( area2_list )
 all_area_list.extend( area3_list )
 
 for area in all_area_list:
-	feature = {}
-	feature['type'] = "Feature"
-	geojson = area.get_boundary_geojson( mapdate ) 
-	if geojson != None:
-		feature['geometry'] = json.loads( geojson )
-	feature['properties'] = { "TL_SCCO_1": area.sig_nm, "sig_cd": area.sig_cd  }
-	features.append( feature )
+    feature = {}
+    feature['type'] = "Feature"
+    geojson = area.get_boundary_geojson( mapdate )
+    if geojson != None:
+        feature['geometry'] = json.loads( geojson )
+    feature['properties'] = { "TL_SCCO_1": area.sig_nm, "sig_cd": area.sig_cd  }
+    features.append( feature )
 
 sgg = {	"crs": 
-						{	"type":"name", 
-							"properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}
-						},
-				"type": "FeatureCollection" 
-			} 
+                        {	"type":"name",
+                            "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}
+                        },
+                "type": "FeatureCollection"
+            }
 sgg['features'] = features
 
 #print sgg.keys()
@@ -90,10 +90,10 @@ json_lines = geoJSON.split( "\n" )
 
 filename = "map_" + mapdate + ".geojson"
 if args.o:
-	filename = args.o
+    filename = args.o
 f = codecs.open( filename, encoding='utf-8', mode='w')
 for line in json_lines:
-	f.write ( line )
+    f.write ( line )
 f.close()
 
 #f = codecs.open("730_bielection_area_list.txt", encoding='utf-8', mode='w')

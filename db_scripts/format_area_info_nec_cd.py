@@ -29,16 +29,16 @@ http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?electionId=00201406
 '''
 #'http://info.nec.go.kr/electioninfo/electionInfo_report.xhtml?electionId=0020140604&requestURI=%2Felectioninfo%2F0020140604%2Fcp%2Fcpri03.jsp&topMenuId=CP&secondMenuId=CPRI03&menuId=&statementId=CPRI03_%235&electionCode=5&cityCode=4900&sggCityCode=-1&townCode=4901&sggTownCode=5490101&x=31&y=9'
 election_type = {
-	1: u"대통령선거",
-	2: u"국회의원선거",
-	3: u"시·도지사선거",
-	4: u"구·시·군의 장선거",
-	5: u"시·도의회의원선거",
-	6: u"구·시·군의회의원선거",
-	8: u"광역의원비례대표선거",
-	9: u"기초의원비례대표선거",
-	10: u"교육의원선거",
-	11: u"교육감선거"
+    1: u"대통령선거",
+    2: u"국회의원선거",
+    3: u"시·도지사선거",
+    4: u"구·시·군의 장선거",
+    5: u"시·도의회의원선거",
+    6: u"구·시·군의회의원선거",
+    8: u"광역의원비례대표선거",
+    9: u"기초의원비례대표선거",
+    10: u"교육의원선거",
+    11: u"교육감선거"
 }
 
 nec_sido_list = {
@@ -63,23 +63,23 @@ nec_sido_list = {
 
 
 def get_htmldata( elec_type, citycode, sggcitycode, towncode ):
-	filename = "htmldata/nec_cd_" + elec_type + "_" + citycode + "_" + sggcitycode + "_" + towncode + ".html"
-	if os.path.isfile( filename ):
-		f = open( filename, "r" )
-		data = f.read()
-		f.close()
+    filename = "htmldata/nec_cd_" + elec_type + "_" + citycode + "_" + sggcitycode + "_" + towncode + ".html"
+    if os.path.isfile( filename ):
+        f = open( filename, "r" )
+        data = f.read()
+        f.close()
 
-	else: #file not exist
-		url = Template( url_template). substitute( { 'elec_type': elec_type, 'citycode' : citycode, 'sggcitycode': sggcitycode, 'towncode': towncode} )
-		#print url
-		data = urllib2.urlopen(url).read()
-		f = open( filename, 'w' )
-		#f = codecs.open( filename, encoding='utf-8', mode='w')
-		f.write ( data )
-		f.close()
-		
-		
-	return data
+    else: #file not exist
+        url = Template( url_template). substitute( { 'elec_type': elec_type, 'citycode' : citycode, 'sggcitycode': sggcitycode, 'towncode': towncode} )
+        #print url
+        data = urllib2.urlopen(url).read()
+        f = open( filename, 'w' )
+        #f = codecs.open( filename, encoding='utf-8', mode='w')
+        f.write ( data )
+        f.close()
+
+
+    return data
 
 
 
@@ -92,55 +92,55 @@ area_info_nec_cd[elec_date] = {}
 
 
 for elec_type in elec_type_list:
-	print elec_date, elec_type
-	for sido_cd in nec_sido_list.keys():
-		sido = area_info.get( ( area_info.sig_nm == nec_sido_list[sido_cd] ) & ( area_info.valid_from < elec_date ) & ( area_info.valid_to > elec_date ) )
-		
-		area_info_nec_cd[elec_date][sido.sig_cd] = { 'sig_cd': sido.sig_cd, 'sig_nm': sido.sig_nm, 'nec_cd': sido_cd }
-				
-		#print sido.sig_nm, sido.sig_cd, sido_cd
-		#citycode, sggcitycode, towncode
-		if elec_type == '4':
-			citycode = sido_cd + "00"
-			sggcitycode = elec_type + sido_cd + "0100"
-			towncode = '-1'
-		elif elec_type == '5':
-			citycode = sido_cd + "00"
-			sggcitycode = "-1"
-			if sido_cd == '51': #세종시
-				towncode = sido_cd + "01"
-			else:
-				towncode = sido_cd + "05"
-		sido.nec_cd = sido_cd
-		#sido.save()
-		#sgg_cd = elec_type + sido_cd[:3] + "100" 
-		
-		data = get_htmldata( elec_type, citycode, sggcitycode, towncode )
-		html = BeautifulSoup( data )
-	
-		if elec_type == '4':
-			select_control = html.find( id='sggCityCode' )
-		elif elec_type == '5':
-			select_control = html.find( id='townCode' )
-			
-		option_list = select_control.find_all( 'option' )
-		for o in option_list[1:]:
-			#print o['value'], o.contents[0]
-			if elec_type == '4':
-				nec_cd = o['value'][1:5]
-			elif elec_type == '5':
-				nec_cd = o['value']
-			area_nm = o.contents[0]
-			#print nec_cd, area_nm
-			try:
-				area = area_info.search_by_name( unicode( area_nm ), elec_date, sig_lvl = '2', parent_id = sido.id )
-			except area_info.DoesNotExist:
-				print "no such area", area_nm, nec_cd
-				continue
-			area_info_nec_cd[elec_date][area.sig_cd] = { 'sig_cd': area.sig_cd, 'sig_nm': area.sig_nm, 'nec_cd': nec_cd }
-			#print area.sig_cd, area.sig_nm, nec_cd
-			#area.nec_cd = nec_cd
-			#area.save()
+    print elec_date, elec_type
+    for sido_cd in nec_sido_list.keys():
+        sido = area_info.get( ( area_info.sig_nm == nec_sido_list[sido_cd] ) & ( area_info.valid_from < elec_date ) & ( area_info.valid_to > elec_date ) )
+
+        area_info_nec_cd[elec_date][sido.sig_cd] = { 'sig_cd': sido.sig_cd, 'sig_nm': sido.sig_nm, 'nec_cd': sido_cd }
+
+        #print sido.sig_nm, sido.sig_cd, sido_cd
+        #citycode, sggcitycode, towncode
+        if elec_type == '4':
+            citycode = sido_cd + "00"
+            sggcitycode = elec_type + sido_cd + "0100"
+            towncode = '-1'
+        elif elec_type == '5':
+            citycode = sido_cd + "00"
+            sggcitycode = "-1"
+            if sido_cd == '51': #세종시
+                towncode = sido_cd + "01"
+            else:
+                towncode = sido_cd + "05"
+        sido.nec_cd = sido_cd
+        #sido.save()
+        #sgg_cd = elec_type + sido_cd[:3] + "100"
+
+        data = get_htmldata( elec_type, citycode, sggcitycode, towncode )
+        html = BeautifulSoup( data )
+
+        if elec_type == '4':
+            select_control = html.find( id='sggCityCode' )
+        elif elec_type == '5':
+            select_control = html.find( id='townCode' )
+
+        option_list = select_control.find_all( 'option' )
+        for o in option_list[1:]:
+            #print o['value'], o.contents[0]
+            if elec_type == '4':
+                nec_cd = o['value'][1:5]
+            elif elec_type == '5':
+                nec_cd = o['value']
+            area_nm = o.contents[0]
+            #print nec_cd, area_nm
+            try:
+                area = area_info.search_by_name( unicode( area_nm ), elec_date, sig_lvl = '2', parent_id = sido.id )
+            except area_info.DoesNotExist:
+                print "no such area", area_nm, nec_cd
+                continue
+            area_info_nec_cd[elec_date][area.sig_cd] = { 'sig_cd': area.sig_cd, 'sig_nm': area.sig_nm, 'nec_cd': nec_cd }
+            #print area.sig_cd, area.sig_nm, nec_cd
+            #area.nec_cd = nec_cd
+            #area.save()
 
 nec_cd_json = json.dumps( area_info_nec_cd, separators = (',', ':'), indent=4, sort_keys = True, encoding='utf-8', ensure_ascii=False )
 

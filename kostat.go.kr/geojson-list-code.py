@@ -26,5 +26,5 @@ for tmp in data['features']:
         tmp_unit_name = tmp['properties']['Description']
     elif( tmp['properties'].has_key('admname') ):
         tmp_unit_name = tmp['properties']['admname']
-    print tmp_code.encode('utf-8')+"\t"+tmp_unit_name.encode('utf-8')
+    print tmp_code.encode('utf-8')+"\t"+tmp_unit_name.encode('utf-8'), tmp['geometry']['type']
 json_data.close()

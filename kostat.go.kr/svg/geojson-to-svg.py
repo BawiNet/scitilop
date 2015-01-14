@@ -58,7 +58,6 @@ svg_header = """\
 
 #svg_polygon = '<polygon points="%s" style="fill:none;stroke:purple;stroke-width:1" />'
 svg_polygon = '<polygon points="%s" class="region%s" />'
-svg_comment = u'<!-- %s -->'
 svg_footer = "</svg>"
 
 f_svg = open('%s.svg'%output_name,'w')
@@ -80,7 +79,8 @@ for tmp in tmp_geojson['features']:
         tmp_unit_name = tmp['properties']['admname']
 
     tmp_type = tmp['geometry']['type']
-    #f_svg.write(u'<!-- '+tmp_unit_name.encode('utf-8')+tmp_code.encode('utf-8')+u',%s'%(tmp_type)+u' -->\n')
+    f_svg.write('<!-- '+ tmp_unit_name.encode('utf-8') +'('+ tmp_code.encode('utf-8') +') -->\n')
+    f_css.write('/* '+ tmp_unit_name.encode('utf-8') +'('+ tmp_code.encode('utf-8') +') */\n')
     f_css.write('polygon.region%s {fill:%s, stroke-width:1, stroke-color:white }\n'%(tmp_code, color_region[tmp_code]))
 
     if( tmp_type == 'Polygon' ):

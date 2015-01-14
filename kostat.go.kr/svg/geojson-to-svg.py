@@ -81,7 +81,7 @@ for tmp in tmp_geojson['features']:
     tmp_type = tmp['geometry']['type']
     f_svg.write('<!-- '+ tmp_unit_name.encode('utf-8') +'('+ tmp_code.encode('utf-8') +') -->\n')
     f_css.write('/* '+ tmp_unit_name.encode('utf-8') +'('+ tmp_code.encode('utf-8') +') */\n')
-    f_css.write('polygon.region%s {fill:%s, stroke-width:1, stroke-color:white }\n'%(tmp_code, color_region[tmp_code]))
+    f_css.write('polygon.region%s {fill:%s; stroke-width:0; stroke:white }\n'%(tmp_code, color_region[tmp_code]))
 
     if( tmp_type == 'Polygon' ):
         tmp_coord = ' '.join(['%f,%f'%(svg_margin_x+(x-min_x)*scale_x,svg_height-(y-min_y)*scale_y-svg_margin_y) for x,y in tmp['geometry']['coordinates'][0]])

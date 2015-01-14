@@ -1,34 +1,34 @@
 /* 서울특별시(11) */
-polygon.region11 {fill:red, stroke-width:1, stroke-color:white }
+polygon.region11 {fill:red; stroke-width:0; stroke:white }
 /* 부산광역시(21) */
-polygon.region21 {fill:blue, stroke-width:1, stroke-color:white }
+polygon.region21 {fill:blue; stroke-width:0; stroke:white }
 /* 대구광역시(22) */
-polygon.region22 {fill:blue, stroke-width:1, stroke-color:white }
+polygon.region22 {fill:blue; stroke-width:0; stroke:white }
 /* 인천광역시(23) */
-polygon.region23 {fill:blue, stroke-width:1, stroke-color:white }
+polygon.region23 {fill:blue; stroke-width:0; stroke:white }
 /* 광주광역시(24) */
-polygon.region24 {fill:blue, stroke-width:1, stroke-color:white }
+polygon.region24 {fill:blue; stroke-width:0; stroke:white }
 /* 대전광역시(25) */
-polygon.region25 {fill:blue, stroke-width:1, stroke-color:white }
+polygon.region25 {fill:blue; stroke-width:0; stroke:white }
 /* 울산광역시(26) */
-polygon.region26 {fill:blue, stroke-width:1, stroke-color:white }
+polygon.region26 {fill:blue; stroke-width:0; stroke:white }
 /* 세종특별자치시(29) */
-polygon.region29 {fill:cyan, stroke-width:1, stroke-color:white }
+polygon.region29 {fill:cyan; stroke-width:0; stroke:white }
 /* 경기도(31) */
-polygon.region31 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region31 {fill:green; stroke-width:0; stroke:white }
 /* 강원도(32) */
-polygon.region32 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region32 {fill:green; stroke-width:0; stroke:white }
 /* 충청북도(33) */
-polygon.region33 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region33 {fill:green; stroke-width:0; stroke:white }
 /* 충청남도(34) */
-polygon.region34 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region34 {fill:green; stroke-width:0; stroke:white }
 /* 전라북도(35) */
-polygon.region35 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region35 {fill:green; stroke-width:0; stroke:white }
 /* 전라남도(36) */
-polygon.region36 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region36 {fill:green; stroke-width:0; stroke:white }
 /* 경상북도(37) */
-polygon.region37 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region37 {fill:green; stroke-width:0; stroke:white }
 /* 경상남도(38) */
-polygon.region38 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region38 {fill:green; stroke-width:0; stroke:white }
 /* 제주특별자치도(39) */
-polygon.region39 {fill:green, stroke-width:1, stroke-color:white }
+polygon.region39 {fill:green; stroke-width:0; stroke:white }
